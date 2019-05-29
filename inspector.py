@@ -6,6 +6,7 @@ import urllib.parse
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 
 
 class Inspector:
@@ -101,7 +102,18 @@ class Inspector:
         """Load the mast dataframe into an interactive dash instance"""
 
         # Plot 1: Modes
-        modes = np.array(self.mast["Filters/Gratings"], dtype=str)
+        mode_groups = [["G140L", "G140M", "G230M", "G230L"],
+                       ["G230LB", "G230MB", "G430L", "G430M", "G750L", "G750M"],
+                       ["E140M", "E140H", "E230M", "E230H"],
+                       ["PRISM"]]
+        labels = ["MAMA First Order Spectroscopy",
+                  "CCD First Order Spectroscopy",
+                  "MAMA Echelle Spectroscopy",
+                  "MAMA Prism Spectroscopy"]
+        modes_df = self.mast[["Filters/Gratings", "Start Time"]]
+        p1_data = [go.Histogram(x=np.array(modes_df['Filters/Gratings'][modes_df['Filters/Gratings'].isin(grp)],
+                                  dtype=str),  name=label) for grp, label in zip(mode_groups, labels)]
+        print(p1_data)
 
         # Plot 2: Apertures
         apertures = np.array(self.mast["Apertures"], dtype=str)
@@ -118,12 +130,9 @@ class Inspector:
             dcc.Graph(
                 id='plot-1',
                 figure={
-                    'data': [
-                        {'x': modes, 'type': 'histogram', 'name': 'Modes'},
-                    ],
-                    'layout': {
-                        'title': 'Modes'
-                    }
+                    'data': p1_data,
+                    'layout': go.Layout(title="Modes",
+                                        barmode='group')
                 }
             ),
             dcc.Graph(
