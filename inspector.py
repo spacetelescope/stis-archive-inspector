@@ -99,26 +99,41 @@ class Inspector:
 
     def load_dataframe_into_dash(self):
         """Load the mast dataframe into an interactive dash instance"""
-        external_stylesheets = self.stylesheets
 
-        app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+        # Plot 1: Modes
+        modes = np.array(self.mast["Filters/Gratings"], dtype=str)
 
+        # Plot 2: Apertures
+        apertures = np.array(self.mast["Apertures"], dtype=str)
+
+        #Layout Dash App
+        app = dash.Dash(__name__, external_stylesheets=self.stylesheets)
         app.layout = html.Div(children=[
-            html.H1(children='Hello Dash'),
+            html.H1(children=f'{self.instrument} Archive Inspector'),
 
             html.Div(children='''
                 Dash: A web application framework for Python.
             '''),
 
             dcc.Graph(
-                id='example-graph',
+                id='plot-1',
                 figure={
                     'data': [
-                        {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                        {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
+                        {'x': modes, 'type': 'histogram', 'name': 'Modes'},
                     ],
                     'layout': {
-                        'title': 'Dash Data Visualization'
+                        'title': 'Modes'
+                    }
+                }
+            ),
+            dcc.Graph(
+                id='plot-2',
+                figure={
+                    'data': [
+                        {'x': apertures, 'type': 'histogram', 'name': 'Modes'},
+                    ],
+                    'layout': {
+                        'title': 'Apertures'
                     }
                 }
             )
