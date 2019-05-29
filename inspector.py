@@ -117,6 +117,7 @@ class Inspector:
                   "CCD First Order Spectroscopy",
                   "MAMA Echelle Spectroscopy",
                   "MAMA Prism Spectroscopy"]
+
         modes_df = self.mast[["Filters/Gratings", "Start Time"]]
         start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                                 for start_time in modes_df['Start Time']])
@@ -126,7 +127,6 @@ class Inspector:
         modes_df = modes_df[["Filters/Gratings", "Decimal Year"]]
         p1_data = [go.Histogram(x=np.array(modes_df['Filters/Gratings'][modes_df['Filters/Gratings'].isin(grp)],
                                   dtype=str),  name=label) for grp, label in zip(mode_groups, labels)]
-        print(p1_data)
 
         # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
