@@ -17,6 +17,7 @@ class Inspector:
         self.gen_csv = gen_csv
         self.datatype = datatype
         self.instrument = instrument
+        self.stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
         self.mast = []
 
     def generate_from_csv(self):
@@ -95,3 +96,38 @@ class Inspector:
         mast['Instrument Config'] = [x.strip() for x in mast['Instrument Config']]
         self.mast = mast
         return self.mast
+
+    def load_dataframe_into_dash(self):
+        """Load the mast dataframe into an interactive dash instance"""
+        external_stylesheets = self.stylesheets
+
+        app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+        app.layout = html.Div(children=[
+            html.H1(children='Hello Dash'),
+
+            html.Div(children='''
+                Dash: A web application framework for Python.
+            '''),
+
+            dcc.Graph(
+                id='example-graph',
+                figure={
+                    'data': [
+                        {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                        {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
+                    ],
+                    'layout': {
+                        'title': 'Dash Data Visualization'
+                    }
+                }
+            )
+        ])
+
+        app.run_server(debug=True)
+
+    if __name__ == "__main__":
+        from inspector import Inspector
+        inspec = Inspector()
+        inspec.generate_from_csv()
+        inspec.load_dataframe_into_dash()
