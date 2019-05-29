@@ -121,10 +121,11 @@ class Inspector:
         modes_df = self.mast[["Filters/Gratings", "Start Time"]]
         start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                                 for start_time in modes_df['Start Time']])
-
         # Convert to Start Times to Decimal Years
         modes_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
         modes_df = modes_df[["Filters/Gratings", "Decimal Year"]]
+
+        # Filter data for modes plot
         p1_data = [go.Histogram(x=np.array(modes_df['Filters/Gratings'][modes_df['Filters/Gratings'].isin(grp)],
                                   dtype=str),  name=label) for grp, label in zip(mode_groups, labels)]
 
@@ -140,21 +141,14 @@ class Inspector:
                 Dash: A web application framework for Python.
             '''),
 
-            dcc.Graph(
-                id='plot-1',
-                figure={
-                    'data': p1_data,
-                    'layout': go.Layout(title="Modes",
-                                        barmode='group')
-                }
-            ),
+            dcc.Graph(id='modes-plot-with-slider'),
             dcc.RangeSlider(id='modes-date-slider',
-                            min=min(start_times).year,
-                            max=max(start_times).year + 1,
-                            step=1,
-                            value=[min(start_times).year, max(start_times).year + 1]
-            ),
-            html.Div(id="output-container-modes-slider"),
+                            min=int(min(modes_df['Decimal Year'])),
+                            max=int(max(modes_df['Decimal Year'])) + 1,
+                            step=None,
+                            value=[int(min(modes_df['Decimal Year'])), int(max(modes_df['Decimal Year'])) + 1],
+                            marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()}
+                            ),
             dcc.Graph(
                 id='plot-2',
                 figure={
@@ -169,10 +163,19 @@ class Inspector:
         ])
 
         # Callbacks
-        @app.callback(dash.dependencies.Output('output-container-modes-slider', 'children'),
+        @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
             [dash.dependencies.Input('modes-date-slider', 'value')])
-        def update_output(value):
-            return 'Showing results from years {}'.format(value)
+        def update_figure(year_range):
+            # Filter observations by observation year (decimal)
+            filtered_df = modes_df['Filters/Gratings'][(modes_df['Decimal Year'] >= year_range[0]) & (modes_df['Decimal Year'] <= year_range[1])]
+            # Filter modes by group
+            p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
+                                               dtype=str), name=label) for grp, label in zip(mode_groups, labels)]
+            return {
+                    'data': p1_data,
+                    'layout': go.Layout(title="Modes",
+                                        barmode='group')
+                }
         app.run_server(debug=True)
 
     if __name__ == "__main__":
