@@ -98,10 +98,17 @@ class Inspector:
         self.mast = mast
         return self.mast
 
+    def dt_to_dec(self, dt):
+        """Convert a datetime to decimal year."""
+        year_start = datetime.datetime(dt.year, 1, 1)
+        year_end = year_start.replace(year=dt.year + 1)
+        return dt.year + ((dt - year_start).total_seconds() /  # seconds so far
+                          float((year_end - year_start).total_seconds()))  # seconds in year
+
     def load_dataframe_into_dash(self):
         """Load the mast dataframe into an interactive dash instance"""
 
-        # Plot 1: Modes
+        # Plot 1: Modes --------------------------------------------------
         mode_groups = [["G140L", "G140M", "G230M", "G230L"],
                        ["G230LB", "G230MB", "G430L", "G430M", "G750L", "G750M"],
                        ["E140M", "E140H", "E230M", "E230H"],
@@ -111,11 +118,17 @@ class Inspector:
                   "MAMA Echelle Spectroscopy",
                   "MAMA Prism Spectroscopy"]
         modes_df = self.mast[["Filters/Gratings", "Start Time"]]
+        start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
+                                for start_time in modes_df['Start Time']])
+
+        # Convert to Start Times to Decimal Years
+        modes_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
+        modes_df = modes_df[["Filters/Gratings", "Decimal Year"]]
         p1_data = [go.Histogram(x=np.array(modes_df['Filters/Gratings'][modes_df['Filters/Gratings'].isin(grp)],
                                   dtype=str),  name=label) for grp, label in zip(mode_groups, labels)]
         print(p1_data)
 
-        # Plot 2: Apertures
+        # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
 
         #Layout Dash App
@@ -135,6 +148,13 @@ class Inspector:
                                         barmode='group')
                 }
             ),
+            dcc.RangeSlider(id='modes-date-slider',
+                            min=min(start_times).year,
+                            max=max(start_times).year + 1,
+                            step=1,
+                            value=[min(start_times).year, max(start_times).year + 1]
+            ),
+            html.Div(id="output-container-modes-slider"),
             dcc.Graph(
                 id='plot-2',
                 figure={
@@ -148,6 +168,11 @@ class Inspector:
             )
         ])
 
+        # Callbacks
+        @app.callback(dash.dependencies.Output('output-container-modes-slider', 'children'),
+            [dash.dependencies.Input('modes-date-slider', 'value')])
+        def update_output(value):
+            return 'Showing results from years {}'.format(value)
         app.run_server(debug=True)
 
     if __name__ == "__main__":
