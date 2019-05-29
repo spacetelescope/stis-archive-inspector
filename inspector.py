@@ -125,10 +125,6 @@ class Inspector:
         modes_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
         modes_df = modes_df[["Filters/Gratings", "Decimal Year"]]
 
-        # Filter data for modes plot
-        p1_data = [go.Histogram(x=np.array(modes_df['Filters/Gratings'][modes_df['Filters/Gratings'].isin(grp)],
-                                  dtype=str),  name=label) for grp, label in zip(mode_groups, labels)]
-
         # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
 
@@ -137,30 +133,15 @@ class Inspector:
         app.layout = html.Div(children=[
             html.H1(children=f'{self.instrument} Archive Inspector'),
 
-            html.Div(children='''
-                Dash: A web application framework for Python.
-            '''),
-
             dcc.Graph(id='modes-plot-with-slider'),
             dcc.RangeSlider(id='modes-date-slider',
                             min=int(min(modes_df['Decimal Year'])),
                             max=int(max(modes_df['Decimal Year'])) + 1,
-                            step=None,
                             value=[int(min(modes_df['Decimal Year'])), int(max(modes_df['Decimal Year'])) + 1],
-                            marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()}
-                            ),
-            dcc.Graph(
-                id='plot-2',
-                figure={
-                    'data': [
-                        {'x': apertures, 'type': 'histogram', 'name': 'Modes'},
-                    ],
-                    'layout': {
-                        'title': 'Apertures'
-                    }
-                }
-            )
-        ])
+                            marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()},
+                            included=True),
+
+        ], style={'marginLeft': 40, 'marginRight': 40})
 
         # Callbacks
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
@@ -173,9 +154,8 @@ class Inspector:
                                                dtype=str), name=label) for grp, label in zip(mode_groups, labels)]
             return {
                     'data': p1_data,
-                    'layout': go.Layout(title="Modes",
-                                        barmode='group')
-                }
+                    'layout': go.Layout(title="Modes", hovermode='closest')
+            }
         app.run_server(debug=True)
 
     if __name__ == "__main__":
