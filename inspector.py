@@ -225,7 +225,7 @@ class Inspector:
 
             return {
                     'data': p1_data,
-                    'layout': go.Layout(title="Modes", hovermode='closest',
+                    'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
                                         xaxis={'title': 'Mode'},
                                         yaxis={'title': ylabel})
             }
