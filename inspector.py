@@ -20,7 +20,7 @@ class Inspector:
         self.instrument = instrument
         self.stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
         self.mast = []
-        self.selected_modes = ["spectroscopic-modes", "photometric-modes"]
+        self.selected_modes = ["Imaging", "Spectroscopic"]
         self.mode_daterange = []
 
     def generate_from_csv(self):
@@ -120,12 +120,12 @@ class Inspector:
                   "MAMA Echelle Spectroscopy",
                   "MAMA Prism Spectroscopy"]
 
-        modes_df = self.mast[["Filters/Gratings", "Start Time"]]
+        modes_df = self.mast[["Filters/Gratings", "Start Time", "obstype"]]
         start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                                 for start_time in modes_df['Start Time']])
         # Convert to Start Times to Decimal Years
         modes_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
-        modes_df = modes_df[["Filters/Gratings", "Decimal Year"]]
+        modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype"]]
 
         # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
@@ -140,8 +140,9 @@ class Inspector:
 
                 dcc.Tab(label='Modes', children=[html.Div(children=[
                     dcc.Checklist(
-                        options=[{'label': "Photometric Modes", 'value': 'photometric-modes'},
-                                 {'label': "Spectroscopic Modes", 'value': 'spectroscopic-modes'}],
+                        options=[{'label': "Imaging Modes", 'value': 'Imaging'},
+                                 {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
+                                 ],
                         values=self.selected_modes),
                     dcc.Graph(id='modes-plot-with-slider'),
                     dcc.RangeSlider(id='modes-date-slider',
