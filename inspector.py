@@ -151,7 +151,7 @@ class Inspector:
             dcc.Tabs(id="tabs", children=[
 
                 dcc.Tab(label='Modes', children=[html.Div(children=[
-                    dcc.Checklist(
+                    dcc.Checklist(id="modes-type-checklist",
                         options=[{'label': "Imaging Modes", 'value': 'Imaging'},
                                  {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
                                  ],
@@ -173,9 +173,21 @@ class Inspector:
 
         # Callbacks
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
-            [dash.dependencies.Input('modes-date-slider', 'value')])
-        def update_figure(year_range):
+                      [dash.dependencies.Input('modes-date-slider', 'value'),
+                       dash.dependencies.Input('modes-type-checklist', 'values')])
+        def update_figure(year_range, selected_modes):
             self.mode_daterange = year_range
+            self.selected_modes = selected_modes
+
+            mode_groups = []
+            mode_labels = []
+            if "Imaging" in self.selected_modes:
+                mode_groups += im_mode_groups
+                mode_labels += im_mode_labels
+            if "Spectroscopic" in self.selected_modes:
+                mode_groups += spec_mode_groups
+                mode_labels += spec_mode_labels
+
             # Filter observations by observation year (decimal)
             filtered_df = modes_df['Filters/Gratings'][(modes_df['Decimal Year'] >= year_range[0]) & (modes_df['Decimal Year'] <= year_range[1])]
             # Filter modes by group
@@ -185,6 +197,7 @@ class Inspector:
                     'data': p1_data,
                     'layout': go.Layout(title="Modes", hovermode='closest')
             }
+
 
         app.run_server(debug=True)
 
