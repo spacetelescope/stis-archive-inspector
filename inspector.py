@@ -20,8 +20,11 @@ class Inspector:
         self.instrument = instrument
         self.stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
         self.mast = []
-        self.selected_modes = ["Imaging", "Spectroscopic"]
+
+        # Mode Parameters
+        self.selected_modes = ["Spectroscopic"]
         self.mode_daterange = []
+        self.mode_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
 
     def generate_from_csv(self):
         """Generate a Pandas DataFrame from an existing csv metadata file"""
@@ -132,12 +135,12 @@ class Inspector:
             mode_groups += spec_mode_groups
             mode_labels += spec_mode_labels
 
-        modes_df = self.mast[["Filters/Gratings", "Start Time", "obstype"]]
+        modes_df = self.mast[["Filters/Gratings", "Start Time", "obstype", "Instrument Config"]]
         start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                                 for start_time in modes_df['Start Time']])
         # Convert to Start Times to Decimal Years
         modes_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
-        modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype"]]
+        modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype", "Instrument Config"]]
 
         # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
@@ -151,11 +154,22 @@ class Inspector:
             dcc.Tabs(id="tabs", children=[
 
                 dcc.Tab(label='Modes', children=[html.Div(children=[
-                    dcc.Checklist(id="modes-type-checklist",
-                        options=[{'label': "Imaging Modes", 'value': 'Imaging'},
-                                 {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
-                                 ],
-                        values=self.selected_modes),
+                    html.Div(children=[
+                        dcc.Checklist(id="modes-detector-checklist",
+                                      options=[{'label': "CCD", 'value': 'STIS/CCD'},
+                                               {'label': "NUV-MAMA", 'value': 'STIS/NUV-MAMA'},
+                                               {'label': "FUV-MAMA", 'value': 'STIS/FUV-MAMA'}
+                                               ],
+                                      values=self.mode_detectors)
+                    ], style={'width': '25%', 'display': 'inline-block'}),
+
+                    html.Div(children=[
+                        dcc.Checklist(id="modes-type-checklist",
+                                      options=[{'label': "Imaging Modes", 'value': 'Imaging'},
+                                               {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
+                                               ], values=self.selected_modes)
+                                        ], style={'width': '25%', 'display': 'inline-block'}),
+
                     dcc.Graph(id='modes-plot-with-slider'),
                     dcc.RangeSlider(id='modes-date-slider',
                                     min=int(min(modes_df['Decimal Year'])),
@@ -174,8 +188,10 @@ class Inspector:
         # Callbacks
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
                       [dash.dependencies.Input('modes-date-slider', 'value'),
-                       dash.dependencies.Input('modes-type-checklist', 'values')])
-        def update_figure(year_range, selected_modes):
+                       dash.dependencies.Input('modes-type-checklist', 'values'),
+                       dash.dependencies.Input('modes-detector-checklist', 'values')])
+        def update_mode_figure(year_range, selected_modes, mode_detectors):
+            self.mode_detectors = mode_detectors
             self.mode_daterange = year_range
             self.selected_modes = selected_modes
 
@@ -188,8 +204,11 @@ class Inspector:
                 mode_groups += spec_mode_groups
                 mode_labels += spec_mode_labels
 
+            # Filter observations by detector
+            filtered_df = modes_df[(modes_df['Instrument Config'].isin(self.mode_detectors))]
             # Filter observations by observation year (decimal)
-            filtered_df = modes_df['Filters/Gratings'][(modes_df['Decimal Year'] >= year_range[0]) & (modes_df['Decimal Year'] <= year_range[1])]
+            filtered_df = filtered_df['Filters/Gratings'][(filtered_df['Decimal Year'] >= year_range[0]) &
+                                                          (filtered_df['Decimal Year'] <= year_range[1])]
             # Filter modes by group
             p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
                                                dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
