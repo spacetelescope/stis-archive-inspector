@@ -137,6 +137,10 @@ class Inspector:
             dcc.Tabs(id="tabs", children=[
 
                 dcc.Tab(label='Modes', children=[html.Div(children=[
+                    dcc.Checklist(
+                        options=[{'label': "Photometric Modes", 'value': 'photometric-modes'},
+                                 {'label': "Spectroscopic Modes", 'value': 'spectroscopic-modes'}],
+                        values=['spectroscopic-modes']),
                     dcc.Graph(id='modes-plot-with-slider'),
                     dcc.RangeSlider(id='modes-date-slider',
                                     min=int(min(modes_df['Decimal Year'])),
