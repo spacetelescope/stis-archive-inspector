@@ -111,14 +111,26 @@ class Inspector:
         """Load the mast dataframe into an interactive dash instance"""
 
         # Plot 1: Modes --------------------------------------------------
-        mode_groups = [["G140L", "G140M", "G230M", "G230L"],
+        spec_mode_groups = [["G140L", "G140M", "G230M", "G230L"],
                        ["G230LB", "G230MB", "G430L", "G430M", "G750L", "G750M"],
                        ["E140M", "E140H", "E230M", "E230H"],
                        ["PRISM"]]
-        labels = ["MAMA First Order Spectroscopy",
+        spec_mode_labels = ["MAMA First Order Spectroscopy",
                   "CCD First Order Spectroscopy",
                   "MAMA Echelle Spectroscopy",
                   "MAMA Prism Spectroscopy"]
+
+        im_mode_groups = [["MIRVIS", "MIRNUV", "MIRFUV"]]
+        im_mode_labels = ["Imaging"]
+
+        mode_groups = []
+        mode_labels = []
+        if "Imaging" in self.selected_modes:
+            mode_groups += im_mode_groups
+            mode_labels += im_mode_labels
+        if "Spectroscopic" in self.selected_modes:
+            mode_groups += spec_mode_groups
+            mode_labels += spec_mode_labels
 
         modes_df = self.mast[["Filters/Gratings", "Start Time", "obstype"]]
         start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
@@ -130,7 +142,7 @@ class Inspector:
         # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
 
-        #Layout Dash App
+        # Layout Dash App
         app = dash.Dash(__name__, external_stylesheets=self.stylesheets)
 
         # Header
@@ -168,7 +180,7 @@ class Inspector:
             filtered_df = modes_df['Filters/Gratings'][(modes_df['Decimal Year'] >= year_range[0]) & (modes_df['Decimal Year'] <= year_range[1])]
             # Filter modes by group
             p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
-                                               dtype=str), name=label) for grp, label in zip(mode_groups, labels)]
+                                               dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
             return {
                     'data': p1_data,
                     'layout': go.Layout(title="Modes", hovermode='closest')
