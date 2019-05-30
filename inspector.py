@@ -136,12 +136,12 @@ class Inspector:
             mode_groups += spec_mode_groups
             mode_labels += spec_mode_labels
 
-        modes_df = self.mast[["Filters/Gratings", "Start Time", "obstype", "Instrument Config"]]
+        modes_df = self.mast[["Filters/Gratings", "Start Time", "obstype", "Instrument Config", "Exp Time"]]
         start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                                 for start_time in modes_df['Start Time']])
         # Convert to Start Times to Decimal Years
         modes_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
-        modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype", "Instrument Config"]]
+        modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype", "Instrument Config", "Exp Time"]]
 
         # Plot 2: Apertures ------------------------------------------------
         apertures = np.array(self.mast["Apertures"], dtype=str)
@@ -175,7 +175,7 @@ class Inspector:
                         dcc.Dropdown(id="modes-metric-dropdown",
                                       options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
                                                {'label': "Total Exposure Time", 'value': 'exptime'}
-                                               ], value=self.mode_metric)
+                                               ], value=self.mode_metric, clearable=False)
                     ], style={'width': '40%', 'display': 'inline-block'}),
 
                     dcc.Graph(id='modes-plot-with-slider'),
@@ -197,11 +197,13 @@ class Inspector:
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
                       [dash.dependencies.Input('modes-date-slider', 'value'),
                        dash.dependencies.Input('modes-type-checklist', 'values'),
-                       dash.dependencies.Input('modes-detector-checklist', 'values')])
-        def update_mode_figure(year_range, selected_modes, mode_detectors):
+                       dash.dependencies.Input('modes-detector-checklist', 'values'),
+                       dash.dependencies.Input('modes-metric-dropdown', 'value')])
+        def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
             self.mode_detectors = mode_detectors
             self.mode_daterange = year_range
             self.selected_modes = selected_modes
+            self.mode_metric = mode_metric
 
             mode_groups = []
             mode_labels = []
@@ -218,11 +220,15 @@ class Inspector:
             filtered_df = filtered_df['Filters/Gratings'][(filtered_df['Decimal Year'] >= year_range[0]) &
                                                           (filtered_df['Decimal Year'] <= year_range[1])]
             # Filter modes by group
-            p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
-                                               dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
-
-            ylabel = "Number of Observations"
-
+            if self.mode_metric == 'n-obs':
+                p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
+                                                   dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
+                ylabel = "Number of Observations"
+            elif self.mode_metric == 'exptime':
+                p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
+                                                   dtype=str), name=label) for grp, label in
+                           zip(mode_groups, mode_labels)]
+                ylabel = "Total Exposure Time (Seconds)"
             return {
                     'data': p1_data,
                     'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
