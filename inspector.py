@@ -212,9 +212,14 @@ class Inspector:
             # Filter modes by group
             p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
                                                dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
+
+            ylabel = "Number of Observations"
+
             return {
                     'data': p1_data,
-                    'layout': go.Layout(title="Modes", hovermode='closest')
+                    'layout': go.Layout(title="Modes", hovermode='closest',
+                                        xaxis={'title': 'Mode'},
+                                        yaxis={'title': ylabel})
             }
 
 
