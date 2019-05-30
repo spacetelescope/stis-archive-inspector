@@ -130,18 +130,27 @@ class Inspector:
 
         #Layout Dash App
         app = dash.Dash(__name__, external_stylesheets=self.stylesheets)
+
+        # Header
         app.layout = html.Div(children=[
-            html.H1(children=f'{self.instrument} Archive Inspector'),
+            html.H1(f'{self.instrument} Archive Inspector'),
+            dcc.Tabs(id="tabs", children=[
 
-            dcc.Graph(id='modes-plot-with-slider'),
-            dcc.RangeSlider(id='modes-date-slider',
-                            min=int(min(modes_df['Decimal Year'])),
-                            max=int(max(modes_df['Decimal Year'])) + 1,
-                            value=[int(min(modes_df['Decimal Year'])), int(max(modes_df['Decimal Year'])) + 1],
-                            marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()},
-                            included=True),
+                dcc.Tab(label='Modes', children=[html.Div(children=[
+                    dcc.Graph(id='modes-plot-with-slider'),
+                    dcc.RangeSlider(id='modes-date-slider',
+                                    min=int(min(modes_df['Decimal Year'])),
+                                    max=int(max(modes_df['Decimal Year'])) + 1,
+                                    value=[int(min(modes_df['Decimal Year'])), int(max(modes_df['Decimal Year'])) + 1],
+                                    marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()},
+                                    included=True),
+                ], style={'marginLeft': 40, 'marginRight': 40})
 
-        ], style={'marginLeft': 40, 'marginRight': 40})
+                ]),
+                dcc.Tab(label='Tab Two', value='apertures_tab'),
+            ]),
+            html.Div(id='tabs-content')
+        ])
 
         # Callbacks
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
@@ -156,6 +165,7 @@ class Inspector:
                     'data': p1_data,
                     'layout': go.Layout(title="Modes", hovermode='closest')
             }
+
         app.run_server(debug=True)
 
     if __name__ == "__main__":
