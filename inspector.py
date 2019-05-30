@@ -25,6 +25,7 @@ class Inspector:
         self.selected_modes = ["Spectroscopic"]
         self.mode_daterange = []
         self.mode_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
+        self.mode_metric = "n-obs"
 
     def generate_from_csv(self):
         """Generate a Pandas DataFrame from an existing csv metadata file"""
@@ -169,6 +170,13 @@ class Inspector:
                                                {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
                                                ], values=self.selected_modes)
                                         ], style={'width': '25%', 'display': 'inline-block'}),
+
+                    html.Div(children=[
+                        dcc.Dropdown(id="modes-metric-dropdown",
+                                      options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
+                                               {'label': "Total Exposure Time", 'value': 'exptime'}
+                                               ], value=self.mode_metric)
+                    ], style={'width': '40%', 'display': 'inline-block'}),
 
                     dcc.Graph(id='modes-plot-with-slider'),
                     dcc.RangeSlider(id='modes-date-slider',
