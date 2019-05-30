@@ -20,6 +20,8 @@ class Inspector:
         self.instrument = instrument
         self.stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
         self.mast = []
+        self.selected_modes = ["spectroscopic-modes", "photometric-modes"]
+        self.mode_daterange = []
 
     def generate_from_csv(self):
         """Generate a Pandas DataFrame from an existing csv metadata file"""
@@ -140,7 +142,7 @@ class Inspector:
                     dcc.Checklist(
                         options=[{'label': "Photometric Modes", 'value': 'photometric-modes'},
                                  {'label': "Spectroscopic Modes", 'value': 'spectroscopic-modes'}],
-                        values=['spectroscopic-modes']),
+                        values=self.selected_modes),
                     dcc.Graph(id='modes-plot-with-slider'),
                     dcc.RangeSlider(id='modes-date-slider',
                                     min=int(min(modes_df['Decimal Year'])),
@@ -160,6 +162,7 @@ class Inspector:
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
             [dash.dependencies.Input('modes-date-slider', 'value')])
         def update_figure(year_range):
+            self.mode_daterange = year_range
             # Filter observations by observation year (decimal)
             filtered_df = modes_df['Filters/Gratings'][(modes_df['Decimal Year'] >= year_range[0]) & (modes_df['Decimal Year'] <= year_range[1])]
             # Filter modes by group
