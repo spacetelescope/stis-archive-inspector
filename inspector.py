@@ -252,7 +252,6 @@ class Inspector:
                     for mode in grp:
                         exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
                         mode_exp_tots.append(exp_tot)
-                        print(mode, exp_tot)
 
                     new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
                     mode_exp_tots = np.array(mode_exp_tots)[np.array(mode_exp_tots) != 0.0]
