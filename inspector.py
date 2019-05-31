@@ -247,7 +247,7 @@ class Inspector:
 
                 # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
                 # it is the better choice in this case
-                p1_data = [go.Bar(x=grp, y=n, name=label)
+                p1_data = [go.Bar(x=grp, y=n, name=label,opacity=0.8)
                            for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
                 ylabel = "Number of Observations"
 
@@ -267,7 +267,7 @@ class Inspector:
                     exp_tots.append(mode_exp_tots)
                     filtered_groups.append(list(new_grp))
 
-                p1_data = [go.Bar(x=grp, y=exp, name=label)
+                p1_data = [go.Bar(x=grp, y=exp, name=label,opacity=0.8)
                            for grp, exp, label in zip(filtered_groups, exp_tots, mode_labels)]
 
                 ylabel = "Total Exposure Time (Seconds)"
@@ -281,19 +281,90 @@ class Inspector:
 
         @app.callback(dash.dependencies.Output('mode-timeline', 'figure'),
                       [dash.dependencies.Input('modes-date-slider', 'value'),
-                       dash.dependencies.Input('modes-type-checklist', 'values'),
-                       dash.dependencies.Input('modes-detector-checklist', 'values'),
                        dash.dependencies.Input('modes-metric-dropdown', 'value'),
                        dash.dependencies.Input('modes-plot-with-slider', 'clickData')])
-        def update_mode_timeline(year_range, selected_modes, mode_detectors, mode_metric, click_data):
-            self.mode_detectors = mode_detectors
+        def update_mode_timeline(year_range, mode_metric, click_data):
             self.mode_daterange = year_range
-            self.selected_modes = selected_modes
             self.mode_metric = mode_metric
+            bins = np.arange(self.mode_daterange[0],self.mode_daterange[1])
+
             if click_data is not None:
                 mode = click_data['points'][0]['x']
-                mode_timeline_df = modes_df[modes_df['Filters/Gratings'].isin([mode])]
+                # Filter observations by mode
+                filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
+                # Filter observations by observation year (decimal)
+                filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                                          (filtered_df['Decimal Year'] <= year_range[1])]
 
+                # Filter modes by group
+                if self.mode_metric == 'n-obs':
+                    timeline_data = [go.Histogram(x=filtered_df['Decimal Year'], opacity=0.8)]
+
+
+                    ylabel= "Number of Observations"
+                    return {
+                        'data': timeline_data,
+                        'layout': go.Layout(title=f"{mode} Timeline", hovermode='closest',
+                                            xaxis={'title': 'Observing Date'},
+                                            yaxis={'title': ylabel})
+                    }
+                elif self.mode_metric == 'exptime':
+
+                    filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
+                    exp_tots = []
+                    for i, bin in enumerate(bins):
+                        if bin == bins[-1]:
+                            continue
+                        mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
+                               (np.array(filtered_df['Decimal Year']) <= bins[i+1])
+                        exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+                    timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
+                    ylabel = "Total Exposure Time (Seconds)"
+
+                return {
+                    'data': timeline_data,
+                    'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
+                                        xaxis={'title': 'Mode'},
+                                        yaxis={'title': ylabel})
+                }
+
+            else:
+                mode="G140L"
+                # Filter observations by detector
+                filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
+                # Filter observations by observation year (decimal)
+                filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                                          (filtered_df['Decimal Year'] <= year_range[1])]
+
+                # Filter modes by group
+                if self.mode_metric == 'n-obs':
+                    timeline_data = [go.Histogram(x=filtered_df['Decimal Year'], opacity=0.8)]
+                    ylabel = "Number of Observations"
+                    return {
+                        'data': timeline_data,
+                        'layout': go.Layout(title=f"{mode} Timeline", hovermode='closest',
+                                            xaxis={'title': 'Observing Date'},
+                                            yaxis={'title': ylabel})
+                    }
+                elif self.mode_metric == 'exptime':
+
+                    filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
+                    exp_tots = []
+                    for i, bin in enumerate(bins):
+                        if bin == bins[-1]:
+                            continue
+                        mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
+                               (np.array(filtered_df['Decimal Year']) <= bins[i+1])
+                        exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+                    timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
+                    ylabel = "Total Exposure Time (Seconds)"
+
+                return {
+                    'data': timeline_data,
+                    'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
+                                        xaxis={'title': 'Mode'},
+                                        yaxis={'title': ylabel})
+                }
 
         app.run_server(debug=True)
 
