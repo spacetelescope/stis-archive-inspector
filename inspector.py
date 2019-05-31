@@ -155,6 +155,8 @@ class Inspector:
             dcc.Tabs(id="tabs", children=[
 
                 dcc.Tab(label='Modes', children=[html.Div(children=[
+
+                    # Div Container for detector checklist (positioned far left)
                     html.Div(children=[
                         dcc.Checklist(id="modes-detector-checklist",
                                       options=[{'label': "CCD", 'value': 'STIS/CCD'},
@@ -163,28 +165,35 @@ class Inspector:
                                                ],
                                       values=self.mode_detectors)
                     ], style={'width': '25%', 'display': 'inline-block'}),
-
+                    # Div Container for obstype checklist (positioned middle)
                     html.Div(children=[
                         dcc.Checklist(id="modes-type-checklist",
                                       options=[{'label': "Imaging Modes", 'value': 'Imaging'},
                                                {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
                                                ], values=self.selected_modes)
                                         ], style={'width': '25%', 'display': 'inline-block'}),
-
+                    # Div Container for metric chooser (positioned far right)
                     html.Div(children=[
                         dcc.Dropdown(id="modes-metric-dropdown",
                                       options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
                                                {'label': "Total Exposure Time", 'value': 'exptime'}
                                                ], value=self.mode_metric, clearable=False)
                     ], style={'width': '40%', 'display': 'inline-block'}),
+                    # Div Container for Graph and Range Slider
+                    html.Div(children=[
+                        dcc.Graph(id='modes-plot-with-slider'),
+                        dcc.RangeSlider(id='modes-date-slider',
+                                        min=int(min(modes_df['Decimal Year'])),
+                                        max=int(max(modes_df['Decimal Year'])) + 1,
+                                        value=[int(min(modes_df['Decimal Year'])), int(max(modes_df['Decimal Year'])) + 1],
+                                        marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()},
+                                        included=True)],
+                        style={'padding': 20}),
+                    # Div Container for Graph and Range Slider
+                    html.Div(children=[
+                        dcc.Graph(id='mode-timeline')],
+                        style={'width': '50%', 'display': 'inline-block'})
 
-                    dcc.Graph(id='modes-plot-with-slider'),
-                    dcc.RangeSlider(id='modes-date-slider',
-                                    min=int(min(modes_df['Decimal Year'])),
-                                    max=int(max(modes_df['Decimal Year'])) + 1,
-                                    value=[int(min(modes_df['Decimal Year'])), int(max(modes_df['Decimal Year'])) + 1],
-                                    marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()},
-                                    included=True),
                 ], style={'marginLeft': 40, 'marginRight': 40})
 
                 ]),
@@ -270,6 +279,18 @@ class Inspector:
                                         yaxis={'title': ylabel})
             }
 
+        @app.callback(dash.dependencies.Output('mode-timeline', 'figure'),
+                      [dash.dependencies.Input('modes-date-slider', 'value'),
+                       dash.dependencies.Input('modes-type-checklist', 'values'),
+                       dash.dependencies.Input('modes-detector-checklist', 'values'),
+                       dash.dependencies.Input('modes-metric-dropdown', 'value'),
+                       dash.dependencies.Input('modes-plot-with-slider', 'clickData')])
+        def update_mode_timeline(year_range, selected_modes, mode_detectors, mode_metric, clickData):
+            self.mode_detectors = mode_detectors
+            self.mode_daterange = year_range
+            self.selected_modes = selected_modes
+            self.mode_metric = mode_metric
+            print(clickData)
 
         app.run_server(debug=True)
 
