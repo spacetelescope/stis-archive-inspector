@@ -217,18 +217,33 @@ class Inspector:
             # Filter observations by detector
             filtered_df = modes_df[(modes_df['Instrument Config'].isin(self.mode_detectors))]
             # Filter observations by observation year (decimal)
-            filtered_df = filtered_df['Filters/Gratings'][(filtered_df['Decimal Year'] >= year_range[0]) &
+            filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
                                                           (filtered_df['Decimal Year'] <= year_range[1])]
             # Filter modes by group
             if self.mode_metric == 'n-obs':
+                filtered_df = filtered_df['Filters/Gratings']  # Just look at filters and gratings
                 p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
                                                    dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
                 ylabel = "Number of Observations"
             elif self.mode_metric == 'exptime':
-                p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
-                                                   dtype=str), name=label) for grp, label in
-                           zip(mode_groups, mode_labels)]
+                filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
+                exp_tots = []
+                for grp, label in zip(mode_groups, mode_labels):
+                    # grp is a list of modes, label is the category
+                    mode_exp_tots = []
+                    for mode in grp:
+                        exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
+                        mode_exp_tots.append(exp_tot)
+                    exp_tots.append(mode_exp_tots)
+                p1_data = [go.Bar(x=grp, y=exp, name=label)
+                           for grp, exp, label in zip(mode_groups, exp_tots, mode_labels)]
+                """        
+                exp_tots = [np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin(grp)])
+                            for grp, label in zip(mode_groups, mode_labels)]
+                p1_data = [go.Bar(x=mode_labels, y=exp_tots)]
+                """
                 ylabel = "Total Exposure Time (Seconds)"
+
             return {
                     'data': p1_data,
                     'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
