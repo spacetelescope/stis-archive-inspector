@@ -290,81 +290,53 @@ class Inspector:
 
             if click_data is not None:
                 mode = click_data['points'][0]['x']
-                # Filter observations by mode
-                filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
-                # Filter observations by observation year (decimal)
-                filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
-                                          (filtered_df['Decimal Year'] <= year_range[1])]
-
-                # Filter modes by group
-                if self.mode_metric == 'n-obs':
-                    timeline_data = [go.Histogram(x=filtered_df['Decimal Year'], opacity=0.8)]
-
-
-                    ylabel= "Number of Observations"
-                    return {
-                        'data': timeline_data,
-                        'layout': go.Layout(title=f"{mode} Timeline", hovermode='closest',
-                                            xaxis={'title': 'Observing Date'},
-                                            yaxis={'title': ylabel})
-                    }
-                elif self.mode_metric == 'exptime':
-
-                    filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
-                    exp_tots = []
-                    for i, bin in enumerate(bins):
-                        if bin == bins[-1]:
-                            continue
-                        mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
-                               (np.array(filtered_df['Decimal Year']) <= bins[i+1])
-                        exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
-                    timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
-                    ylabel = "Total Exposure Time (Seconds)"
-
-                return {
-                    'data': timeline_data,
-                    'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
-                                        xaxis={'title': 'Mode'},
-                                        yaxis={'title': ylabel})
-                }
-
             else:
-                mode="G140L"
-                # Filter observations by detector
-                filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
-                # Filter observations by observation year (decimal)
-                filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
-                                          (filtered_df['Decimal Year'] <= year_range[1])]
+                mode = "G140L"
+            # Filter observations by mode
+            filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
+            # Filter observations by observation year (decimal)
+            filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                                      (filtered_df['Decimal Year'] <= year_range[1])]
 
-                # Filter modes by group
-                if self.mode_metric == 'n-obs':
-                    timeline_data = [go.Histogram(x=filtered_df['Decimal Year'], opacity=0.8)]
-                    ylabel = "Number of Observations"
-                    return {
-                        'data': timeline_data,
-                        'layout': go.Layout(title=f"{mode} Timeline", hovermode='closest',
-                                            xaxis={'title': 'Observing Date'},
-                                            yaxis={'title': ylabel})
-                    }
-                elif self.mode_metric == 'exptime':
+            # Filter modes by group
+            if self.mode_metric == 'n-obs':
+                #timeline_data = [go.Histogram(x=filtered_df['Decimal Year'], opacity=0.8)]
+                filtered_df = filtered_df['Decimal Year']
+                n_tots = []
+                for i, bin in enumerate(bins):
+                    if bin == bins[-1]:
+                        continue
+                    mask = (np.array(filtered_df) >= bins[i]) * \
+                           (np.array(filtered_df) <= bins[i + 1])
+                    n_tots.append(len(filtered_df[mask]))
+                timeline_data = [go.Bar(x=bins, y=n_tots, opacity=0.8)]
 
-                    filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
-                    exp_tots = []
-                    for i, bin in enumerate(bins):
-                        if bin == bins[-1]:
-                            continue
-                        mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
-                               (np.array(filtered_df['Decimal Year']) <= bins[i+1])
-                        exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
-                    timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
-                    ylabel = "Total Exposure Time (Seconds)"
-
+                ylabel= "Number of Observations"
                 return {
                     'data': timeline_data,
-                    'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
-                                        xaxis={'title': 'Mode'},
+                    'layout': go.Layout(title=f"{mode} Timeline", hovermode='closest',
+                                        xaxis={'title': 'Observing Date'},
                                         yaxis={'title': ylabel})
                 }
+            elif self.mode_metric == 'exptime':
+
+                filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
+                exp_tots = []
+                for i, bin in enumerate(bins):
+                    if bin == bins[-1]:
+                        continue
+                    mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
+                            (np.array(filtered_df['Decimal Year']) <= bins[i+1])
+                    exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+                timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
+                ylabel = "Total Exposure Time (Seconds)"
+
+            return {
+                'data': timeline_data,
+                'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
+                                    xaxis={'title': 'Mode'},
+                                    yaxis={'title': ylabel})
+            }
 
         app.run_server(debug=True)
 
