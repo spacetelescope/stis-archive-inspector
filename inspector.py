@@ -285,12 +285,15 @@ class Inspector:
                        dash.dependencies.Input('modes-detector-checklist', 'values'),
                        dash.dependencies.Input('modes-metric-dropdown', 'value'),
                        dash.dependencies.Input('modes-plot-with-slider', 'clickData')])
-        def update_mode_timeline(year_range, selected_modes, mode_detectors, mode_metric, clickData):
+        def update_mode_timeline(year_range, selected_modes, mode_detectors, mode_metric, click_data):
             self.mode_detectors = mode_detectors
             self.mode_daterange = year_range
             self.selected_modes = selected_modes
             self.mode_metric = mode_metric
-            print(clickData)
+            if click_data is not None:
+                mode = click_data['points'][0]['x']
+                mode_timeline_df = modes_df[modes_df['Filters/Gratings'].isin([mode])]
+
 
         app.run_server(debug=True)
 
