@@ -323,7 +323,7 @@ class Inspector:
 
                 return {
                     'data': timeline_data,
-                    'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
+                    'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
                                         xaxis={'title': 'Mode'},
                                         yaxis={'title': ylabel})
                 }
@@ -361,7 +361,7 @@ class Inspector:
 
                 return {
                     'data': timeline_data,
-                    'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
+                    'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
                                         xaxis={'title': 'Mode'},
                                         yaxis={'title': ylabel})
                 }
