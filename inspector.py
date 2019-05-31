@@ -222,9 +222,24 @@ class Inspector:
             # Filter modes by group
             if self.mode_metric == 'n-obs':
                 filtered_df = filtered_df['Filters/Gratings']  # Just look at filters and gratings
-                p1_data = [go.Histogram(x=np.array(filtered_df[filtered_df.isin(grp)],
-                                                   dtype=str), name=label) for grp, label in zip(mode_groups, mode_labels)]
+                n_tots = []
+                filtered_groups = []  # Need this for avoiding empty bars in plotting
+                for grp, label in zip(mode_groups, mode_labels):
+                    # grp is a list of modes, label is the category
+                    mode_n_tots = []
+                    for mode in grp:
+                        n_tot = len(filtered_df[filtered_df.isin([mode])])
+                        mode_n_tots.append(n_tot)
+                    n_tots.append(mode_n_tots)
+                    new_grp = np.array(grp)[np.array(mode_n_tots) != 0.0]
+                    filtered_groups.append(list(new_grp))
+
+                # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
+                # it is the better choice in this case
+                p1_data = [go.Bar(x=grp, y=n, name=label)
+                           for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
                 ylabel = "Number of Observations"
+                
             elif self.mode_metric == 'exptime':
                 filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
                 exp_tots = []
