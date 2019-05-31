@@ -228,6 +228,7 @@ class Inspector:
             elif self.mode_metric == 'exptime':
                 filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
                 exp_tots = []
+                filtered_groups = []  # Need this for avoiding empty bars in plotting
                 for grp, label in zip(mode_groups, mode_labels):
                     # grp is a list of modes, label is the category
                     mode_exp_tots = []
@@ -235,13 +236,12 @@ class Inspector:
                         exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
                         mode_exp_tots.append(exp_tot)
                     exp_tots.append(mode_exp_tots)
+                    new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
+                    filtered_groups.append(list(new_grp))
+
                 p1_data = [go.Bar(x=grp, y=exp, name=label)
-                           for grp, exp, label in zip(mode_groups, exp_tots, mode_labels)]
-                """        
-                exp_tots = [np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin(grp)])
-                            for grp, label in zip(mode_groups, mode_labels)]
-                p1_data = [go.Bar(x=mode_labels, y=exp_tots)]
-                """
+                           for grp, exp, label in zip(filtered_groups, exp_tots, mode_labels)]
+
                 ylabel = "Total Exposure Time (Seconds)"
 
             return {
