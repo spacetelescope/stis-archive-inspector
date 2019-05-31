@@ -230,8 +230,10 @@ class Inspector:
                     for mode in grp:
                         n_tot = len(filtered_df[filtered_df.isin([mode])])
                         mode_n_tots.append(n_tot)
-                    n_tots.append(mode_n_tots)
+
                     new_grp = np.array(grp)[np.array(mode_n_tots) != 0.0]
+                    mode_n_tots = np.array(mode_n_tots)[np.array(mode_n_tots) != 0.0]
+                    n_tots.append(mode_n_tots)
                     filtered_groups.append(list(new_grp))
 
                 # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
@@ -239,7 +241,7 @@ class Inspector:
                 p1_data = [go.Bar(x=grp, y=n, name=label)
                            for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
                 ylabel = "Number of Observations"
-                
+
             elif self.mode_metric == 'exptime':
                 filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
                 exp_tots = []
@@ -250,8 +252,11 @@ class Inspector:
                     for mode in grp:
                         exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
                         mode_exp_tots.append(exp_tot)
-                    exp_tots.append(mode_exp_tots)
+                        print(mode, exp_tot)
+
                     new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
+                    mode_exp_tots = np.array(mode_exp_tots)[np.array(mode_exp_tots) != 0.0]
+                    exp_tots.append(mode_exp_tots)
                     filtered_groups.append(list(new_grp))
 
                 p1_data = [go.Bar(x=grp, y=exp, name=label)
