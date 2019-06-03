@@ -291,7 +291,7 @@ class Inspector:
         def update_mode_timeline(year_range, mode_metric, click_data):
             self.mode_daterange = year_range
             self.mode_metric = mode_metric
-            bins = np.arange(self.mode_daterange[0],self.mode_daterange[1])
+            bins = np.arange(self.mode_daterange[0], self.mode_daterange[1]+1)
 
             if click_data is not None:
                 mode = click_data['points'][0]['x']
@@ -305,7 +305,6 @@ class Inspector:
 
             # Filter modes by group
             if self.mode_metric == 'n-obs':
-                #timeline_data = [go.Histogram(x=filtered_df['Decimal Year'], opacity=0.8)]
                 filtered_df = filtered_df['Decimal Year']
                 n_tots = []
                 for i, bin in enumerate(bins):
