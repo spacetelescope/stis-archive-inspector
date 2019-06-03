@@ -27,6 +27,12 @@ class Inspector:
         self.mode_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
         self.mode_metric = "n-obs"
 
+        # Aperture Parameters
+        self.aperture_obstype = ["Spectroscopic"]
+        self.aperture_daterange = []
+        self.aperture_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
+        self.aperture_metric = "n-obs"
+
     def generate_from_csv(self):
         """Generate a Pandas DataFrame from an existing csv metadata file"""
         self.mast = pd.read_csv(self.csv_name)
@@ -144,7 +150,7 @@ class Inspector:
         modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype", "Instrument Config", "Exp Time"]]
 
         # Plot 2: Apertures ------------------------------------------------
-        aper_groups = [["52X0.05", "52X0.1", "52X0.2", "52X0.5", "52X2"],
+        aperture_groups = [["52X0.05", "52X0.1", "52X0.2", "52X0.5", "52X2"],
                        ["31X0.05NDA", "31X0.05NDB", "31X0.05NDC"],
                        ["6X6", "0.5X0.5", "2X2", "0.1X0.03", "0.1X0.06", "0.1X0.09", "0.1X0.2",
                        "0.2X0.06", "0.2X0.09", "0.2X0.2", "0.2X0.5", "0.3X0.06", "0.3X0.09", "0.3X0.2", "1X0.06",
@@ -153,9 +159,16 @@ class Inspector:
                        ["F25QTZ", "F25SRF2"],
                        ["F25ND3", "F25ND5", "F25NDQ1", "F25NDQ2", "F25NDQ3", "F25NDQ4"],
                        ["F25MGII", "F25CN270", "F25CIII", "F25CN182", "F25LYA"]]
-        aper_labels = ["Long Slits", "Neutral-Density-Filtered Long Slits",
+        aperture_labels = ["Long Slits", "Neutral-Density-Filtered Long Slits",
                        "Square Apertures", "Full-Field Clear Apertures",
                        "FUV-MAMA Longpass", "Neutral Density Filters (MAMA)","Narrow-Band"]
+
+        apertures_df = self.mast[["Apertures", "Start Time", "obstype", "Instrument Config", "Exp Time"]]
+        start_times = np.array([datetime.datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
+                                for start_time in apertures_df['Start Time']])
+        # Convert to Start Times to Decimal Years
+        apertures_df['Decimal Year'] = [self.dt_to_dec(time) for time in start_times]
+        apertures_df = apertures_df[["Apertures", "Decimal Year", "obstype", "Instrument Config", "Exp Time"]]
 
         # Layout Dash App
         app = dash.Dash(__name__, external_stylesheets=self.stylesheets)
@@ -228,8 +241,8 @@ class Inspector:
                     # Div Container for obstype checklist (positioned middle)
                     html.Div(children=[
                         dcc.Checklist(id="apertures-type-checklist",
-                                      options=[{'label': "Imaging Apertures", 'value': 'Imaging'},
-                                               {'label': "Spectroscopic Apertures", 'value': 'Spectroscopic'}
+                                      options=[{'label': "Imaging Observations", 'value': 'Imaging'},
+                                               {'label': "Spectroscopic Observations", 'value': 'Spectroscopic'}
                                                ], values=self.selected_modes)
                     ], style={'width': '25%', 'display': 'inline-block'}),
                     # Div Container for metric chooser (positioned far right)
@@ -456,74 +469,68 @@ class Inspector:
                        dash.dependencies.Input('apertures-type-checklist', 'values'),
                        dash.dependencies.Input('apertures-detector-checklist', 'values'),
                        dash.dependencies.Input('apertures-metric-dropdown', 'value')])
-        def update_aperture_figure(year_range, selected_modes, mode_detectors, mode_metric):
-            self.mode_detectors = mode_detectors
-            self.mode_daterange = year_range
-            self.selected_modes = selected_modes
-            self.mode_metric = mode_metric
+        def update_aperture_figure(year_range, aperture_obstype, aperture_detectors, aperture_metric):
+            self.aperture_detectors = aperture_detectors
+            self.aperture_daterange = year_range
+            self.aperture_obstype = aperture_obstype
+            self.aperture_metric = aperture_metric
 
-            mode_groups = []
-            mode_labels = []
-            if "Imaging" in self.selected_modes:
-                mode_groups += im_mode_groups
-                mode_labels += im_mode_labels
-            if "Spectroscopic" in self.selected_modes:
-                mode_groups += spec_mode_groups
-                mode_labels += spec_mode_labels
-
+            # Filter observations by obstype
+            filtered_df = apertures_df[(apertures_df['obstype'].isin(self.aperture_obstype))]
             # Filter observations by detector
-            filtered_df = modes_df[(modes_df['Instrument Config'].isin(self.mode_detectors))]
+            filtered_df = filtered_df[(filtered_df['Instrument Config'].isin(self.aperture_detectors))]
             # Filter observations by observation year (decimal)
             filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
                                       (filtered_df['Decimal Year'] <= year_range[1])]
-            # Filter modes by group
-            if self.mode_metric == 'n-obs':
-                filtered_df = filtered_df['Filters/Gratings']  # Just look at filters and gratings
+
+            # Filter apertures by group
+            if self.aperture_metric == 'n-obs':
+                filtered_df = filtered_df['Apertures']  # Just look at apertures
                 n_tots = []
                 filtered_groups = []  # Need this for avoiding empty bars in plotting
-                for grp, label in zip(mode_groups, mode_labels):
-                    # grp is a list of modes, label is the category
-                    mode_n_tots = []
-                    for mode in grp:
-                        n_tot = len(filtered_df[filtered_df.isin([mode])])
-                        mode_n_tots.append(n_tot)
+                for grp, label in zip(aperture_groups, aperture_labels):
+                    # grp is a list of apertures, label is the category
+                    aperture_n_tots = []
+                    for aperture in grp:
+                        n_tot = len(filtered_df[filtered_df.isin([aperture])])
+                        aperture_n_tots.append(n_tot)
 
-                    new_grp = np.array(grp)[np.array(mode_n_tots) != 0.0]
-                    mode_n_tots = np.array(mode_n_tots)[np.array(mode_n_tots) != 0.0]
-                    n_tots.append(mode_n_tots)
+                    new_grp = np.array(grp)[np.array(aperture_n_tots) != 0.0]
+                    aperture_n_tots = np.array(aperture_n_tots)[np.array(aperture_n_tots) != 0.0]
+                    n_tots.append(aperture_n_tots)
                     filtered_groups.append(list(new_grp))
 
                 # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
                 # it is the better choice in this case
-                p1_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
-                           for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
+                aper_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
+                           for grp, n, label in zip(filtered_groups, n_tots, aperture_labels)]
                 ylabel = "Number of Observations"
 
-            elif self.mode_metric == 'exptime':
-                filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
+            elif self.aperture_metric == 'exptime':
+                filtered_df = filtered_df[['Apertures', "Exp Time"]]
                 exp_tots = []
                 filtered_groups = []  # Need this for avoiding empty bars in plotting
-                for grp, label in zip(mode_groups, mode_labels):
-                    # grp is a list of modes, label is the category
-                    mode_exp_tots = []
-                    for mode in grp:
-                        exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
-                        mode_exp_tots.append(exp_tot)
+                for grp, label in zip(aperture_groups, aperture_labels):
+                    # grp is a list of apertures, label is the category
+                    aperture_exp_tots = []
+                    for aperture in grp:
+                        exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Apertures'].isin([aperture])])
+                        aperture_exp_tots.append(exp_tot)
 
-                    new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
-                    mode_exp_tots = np.array(mode_exp_tots)[np.array(mode_exp_tots) != 0.0]
-                    exp_tots.append(mode_exp_tots)
+                    new_grp = np.array(grp)[np.array(aperture_exp_tots) != 0.0]
+                    aperture_exp_tots = np.array(aperture_exp_tots)[np.array(aperture_exp_tots) != 0.0]
+                    exp_tots.append(aperture_exp_tots)
                     filtered_groups.append(list(new_grp))
 
-                p1_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
-                           for grp, exp, label in zip(filtered_groups, exp_tots, mode_labels)]
+                aper_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
+                           for grp, exp, label in zip(filtered_groups, exp_tots, aperture_labels)]
 
                 ylabel = "Total Exposure Time (Seconds)"
 
             return {
-                'data': p1_data,
-                'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
-                                    xaxis={'title': 'Mode'},
+                'data': aper_data,
+                'layout': go.Layout(title=f"{self.instrument} Aperture Usage", hovermode='closest',
+                                    xaxis={'title': 'Aperture'},
                                     yaxis={'title': ylabel})
             }
 
