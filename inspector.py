@@ -189,10 +189,15 @@ class Inspector:
                                         marks={str(int(year)): str(int(year)) for year in modes_df['Decimal Year'].unique()},
                                         included=True)],
                         style={'padding': 20}),
-                    # Div Container for Graph and Range Slider
+                    # Div Container for Mode Timeline
                     html.Div(children=[
                         dcc.Graph(id='mode-timeline')],
-                        style={'width': '50%', 'display': 'inline-block'})
+                        style={'width': '50%', 'display': 'inline-block'}),
+
+                    # Div Container for Mode Timeline
+                    html.Div(children=[
+                        dcc.Graph(id='mode-pie-chart')],
+                        style={'width': '40%', 'display': 'inline-block'}),
 
                 ], style={'marginLeft': 40, 'marginRight': 40})
 
@@ -337,6 +342,68 @@ class Inspector:
                                     xaxis={'title': 'Mode'},
                                     yaxis={'title': ylabel})
             }
+
+        @app.callback(dash.dependencies.Output('mode-pie-chart', 'figure'),
+                      [dash.dependencies.Input('modes-date-slider', 'value'),
+                       dash.dependencies.Input('modes-type-checklist', 'values'),
+                       dash.dependencies.Input('modes-detector-checklist', 'values'),
+                       dash.dependencies.Input('modes-metric-dropdown', 'value')])
+        def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
+            self.mode_detectors = mode_detectors
+            self.mode_daterange = year_range
+            self.selected_modes = selected_modes
+            self.mode_metric = mode_metric
+
+            mode_groups = []
+            mode_labels = []
+            if "Imaging" in self.selected_modes:
+                mode_groups += im_mode_groups
+                mode_labels += im_mode_labels
+            if "Spectroscopic" in self.selected_modes:
+                mode_groups += spec_mode_groups
+                mode_labels += spec_mode_labels
+
+            # Filter observations by detector
+            filtered_df = modes_df[(modes_df['Instrument Config'].isin(self.mode_detectors))]
+            # Filter observations by observation year (decimal)
+            filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                                      (filtered_df['Decimal Year'] <= year_range[1])]
+            # Filter modes by group
+            if self.mode_metric == 'n-obs':
+                filtered_df = filtered_df['Filters/Gratings']  # Just look at filters and gratings
+                n_tots = []
+                modes = []
+                for grp, label in zip(mode_groups, mode_labels):
+                    # grp is a list of modes, label is the category
+                    for mode in grp:
+                        n_tot = len(filtered_df[filtered_df.isin([mode])])
+                        n_tots.append(n_tot)
+                        modes.append(mode)
+
+                # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
+                # it is the better choice in this case
+                pie_data = [go.Pie(labels=modes, values=n_tots, opacity=0.8)]
+
+            elif self.mode_metric == 'exptime':
+                filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
+                exp_tots = []
+                modes = []  # Need this for avoiding empty bars in plotting
+                for grp, label in zip(mode_groups, mode_labels):
+                    # grp is a list of modes, label is the category
+                    mode_exp_tots = []
+                    for mode in grp:
+                        exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
+                        exp_tots.append(exp_tot)
+                        modes.append(mode)
+
+                pie_data = [go.Pie(labels=modes, values=exp_tots, opacity=0.8)]
+
+            return {
+                'data': pie_data,
+                'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
+            }
+
+
 
         app.run_server(debug=True)
 
