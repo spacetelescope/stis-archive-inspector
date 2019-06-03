@@ -291,7 +291,7 @@ class Inspector:
         def update_mode_timeline(year_range, mode_metric, click_data):
             self.mode_daterange = year_range
             self.mode_metric = mode_metric
-            bins = np.arange(self.mode_daterange[0], self.mode_daterange[1]+1)
+            bins = np.arange(self.mode_daterange[0], self.mode_daterange[1]+1, 1)
 
             if click_data is not None:
                 mode = click_data['points'][0]['x']
