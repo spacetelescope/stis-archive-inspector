@@ -144,7 +144,18 @@ class Inspector:
         modes_df = modes_df[["Filters/Gratings", "Decimal Year", "obstype", "Instrument Config", "Exp Time"]]
 
         # Plot 2: Apertures ------------------------------------------------
-        apertures = np.array(self.mast["Apertures"], dtype=str)
+        aper_groups = [["52X0.05", "52X0.1", "52X0.2", "52X0.5", "52X2"],
+                       ["31X0.05NDA", "31X0.05NDB", "31X0.05NDC"],
+                       ["6X6", "0.5X0.5", "2X2", "0.1X0.03", "0.1X0.06", "0.1X0.09", "0.1X0.2",
+                       "0.2X0.06", "0.2X0.09", "0.2X0.2", "0.2X0.5", "0.3X0.06", "0.3X0.09", "0.3X0.2", "1X0.06",
+                        "1X0.2", "6X0.06", "6X0.2", "6X0.5", "0.2X0.05ND", "0.3X0.05ND"],
+                       ["25MAMA", "50CCD", "50CORON"],
+                       ["F25QTZ", "F25SRF2"],
+                       ["F25ND3", "F25ND5", "F25NDQ1", "F25NDQ2", "F25NDQ3", "F25NDQ4"],
+                       ["F25MGII", "F25CN270", "F25CIII", "F25CN182", "F25LYA"]]
+        aper_labels = ["Long Slits", "Neutral-Density-Filtered Long Slits",
+                       "Square Apertures", "Full-Field Clear Apertures",
+                       "FUV-MAMA Longpass", "Neutral Density Filters (MAMA)","Narrow-Band"]
 
         # Layout Dash App
         app = dash.Dash(__name__, external_stylesheets=self.stylesheets)
@@ -202,12 +213,37 @@ class Inspector:
                 ], style={'marginLeft': 40, 'marginRight': 40})
 
                 ]),
-                dcc.Tab(label='Tab Two', value='apertures_tab'),
-            ]),
-            html.Div(id='tabs-content')
-        ])
+                dcc.Tab(label='Apertures', children = [html.Div(children=[
 
-        # Callbacks
+                    # Div Container for detector checklist (positioned far left)
+                    html.Div(children=[
+                        dcc.Checklist(id="apertures-detector-checklist",
+                                      options=[{'label': "CCD", 'value': 'STIS/CCD'},
+                                               {'label': "NUV-MAMA", 'value': 'STIS/NUV-MAMA'},
+                                               {'label': "FUV-MAMA", 'value': 'STIS/FUV-MAMA'}
+                                               ],
+                                      values=self.mode_detectors)
+                    ], style={'width': '25%', 'display': 'inline-block'}),
+
+                    # Div Container for obstype checklist (positioned middle)
+                    html.Div(children=[
+                        dcc.Checklist(id="apertures-type-checklist",
+                                      options=[{'label': "Imaging Apertures", 'value': 'Imaging'},
+                                               {'label': "Spectroscopic Apertures", 'value': 'Spectroscopic'}
+                                               ], values=self.selected_modes)
+                    ], style={'width': '25%', 'display': 'inline-block'}),
+                    # Div Container for metric chooser (positioned far right)
+                    html.Div(children=[
+                        dcc.Dropdown(id="apertures-metric-dropdown",
+                                     options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
+                                              {'label': "Total Exposure Time", 'value': 'exptime'}
+                                              ], value=self.mode_metric, clearable=False)
+                    ], style={'width': '40%', 'display': 'inline-block'})
+            ])]),
+            html.Div(id='tabs-content')
+        ])])
+
+        # Mode Callbacks
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
                       [dash.dependencies.Input('modes-date-slider', 'value'),
                        dash.dependencies.Input('modes-type-checklist', 'values'),
