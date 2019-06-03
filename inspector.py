@@ -238,8 +238,20 @@ class Inspector:
                                      options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
                                               {'label': "Total Exposure Time", 'value': 'exptime'}
                                               ], value=self.mode_metric, clearable=False)
-                    ], style={'width': '40%', 'display': 'inline-block'})
-            ])]),
+                    ], style={'width': '40%', 'display': 'inline-block'}),
+                    # Div Container for Graph and Range Slider
+                    html.Div(children=[
+                        dcc.Graph(id='apertures-plot-with-slider'),
+                        dcc.RangeSlider(id='apertures-date-slider',
+                                        min=int(min(modes_df['Decimal Year'])),
+                                        max=int(max(modes_df['Decimal Year'])) + 1,
+                                        value=[int(min(modes_df['Decimal Year'])),
+                                               int(max(modes_df['Decimal Year'])) + 1],
+                                        marks={str(int(year)): str(int(year)) for year in
+                                               modes_df['Decimal Year'].unique()},
+                                        included=True)],
+                        style={'padding': 20}),
+            ], style={'marginLeft': 40, 'marginRight': 40})]),
             html.Div(id='tabs-content')
         ])])
 
@@ -438,7 +450,82 @@ class Inspector:
                 'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
             }
 
+        # Aperture Callbacks
+        @app.callback(dash.dependencies.Output('apertures-plot-with-slider', 'figure'),
+                      [dash.dependencies.Input('apertures-date-slider', 'value'),
+                       dash.dependencies.Input('apertures-type-checklist', 'values'),
+                       dash.dependencies.Input('apertures-detector-checklist', 'values'),
+                       dash.dependencies.Input('apertures-metric-dropdown', 'value')])
+        def update_aperture_figure(year_range, selected_modes, mode_detectors, mode_metric):
+            self.mode_detectors = mode_detectors
+            self.mode_daterange = year_range
+            self.selected_modes = selected_modes
+            self.mode_metric = mode_metric
 
+            mode_groups = []
+            mode_labels = []
+            if "Imaging" in self.selected_modes:
+                mode_groups += im_mode_groups
+                mode_labels += im_mode_labels
+            if "Spectroscopic" in self.selected_modes:
+                mode_groups += spec_mode_groups
+                mode_labels += spec_mode_labels
+
+            # Filter observations by detector
+            filtered_df = modes_df[(modes_df['Instrument Config'].isin(self.mode_detectors))]
+            # Filter observations by observation year (decimal)
+            filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                                      (filtered_df['Decimal Year'] <= year_range[1])]
+            # Filter modes by group
+            if self.mode_metric == 'n-obs':
+                filtered_df = filtered_df['Filters/Gratings']  # Just look at filters and gratings
+                n_tots = []
+                filtered_groups = []  # Need this for avoiding empty bars in plotting
+                for grp, label in zip(mode_groups, mode_labels):
+                    # grp is a list of modes, label is the category
+                    mode_n_tots = []
+                    for mode in grp:
+                        n_tot = len(filtered_df[filtered_df.isin([mode])])
+                        mode_n_tots.append(n_tot)
+
+                    new_grp = np.array(grp)[np.array(mode_n_tots) != 0.0]
+                    mode_n_tots = np.array(mode_n_tots)[np.array(mode_n_tots) != 0.0]
+                    n_tots.append(mode_n_tots)
+                    filtered_groups.append(list(new_grp))
+
+                # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
+                # it is the better choice in this case
+                p1_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
+                           for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
+                ylabel = "Number of Observations"
+
+            elif self.mode_metric == 'exptime':
+                filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
+                exp_tots = []
+                filtered_groups = []  # Need this for avoiding empty bars in plotting
+                for grp, label in zip(mode_groups, mode_labels):
+                    # grp is a list of modes, label is the category
+                    mode_exp_tots = []
+                    for mode in grp:
+                        exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
+                        mode_exp_tots.append(exp_tot)
+
+                    new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
+                    mode_exp_tots = np.array(mode_exp_tots)[np.array(mode_exp_tots) != 0.0]
+                    exp_tots.append(mode_exp_tots)
+                    filtered_groups.append(list(new_grp))
+
+                p1_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
+                           for grp, exp, label in zip(filtered_groups, exp_tots, mode_labels)]
+
+                ylabel = "Total Exposure Time (Seconds)"
+
+            return {
+                'data': p1_data,
+                'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
+                                    xaxis={'title': 'Mode'},
+                                    yaxis={'title': ylabel})
+            }
 
         app.run_server(debug=True)
 
