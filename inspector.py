@@ -218,7 +218,7 @@ class Inspector:
                         dcc.Graph(id='mode-timeline')],
                         style={'width': '50%', 'display': 'inline-block'}),
 
-                    # Div Container for Mode Timeline
+                    # Div Container for Mode Pie Chart
                     html.Div(children=[
                         dcc.Graph(id='mode-pie-chart')],
                         style={'width': '40%', 'display': 'inline-block'}),
