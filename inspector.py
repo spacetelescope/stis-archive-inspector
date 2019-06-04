@@ -419,7 +419,7 @@ class Inspector:
                        dash.dependencies.Input('modes-type-checklist', 'values'),
                        dash.dependencies.Input('modes-detector-checklist', 'values'),
                        dash.dependencies.Input('modes-metric-dropdown', 'value')])
-        def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
+        def update_mode_pie_figure(year_range, selected_modes, mode_detectors, mode_metric):
             self.mode_detectors = mode_detectors
             self.mode_daterange = year_range
             self.selected_modes = selected_modes
