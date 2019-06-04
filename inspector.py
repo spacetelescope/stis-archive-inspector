@@ -264,6 +264,17 @@ class Inspector:
                                                modes_df['Decimal Year'].unique()},
                                         included=True)],
                         style={'padding': 20}),
+
+                    # Div Container for Mode Timeline
+                    html.Div(children=[
+                        dcc.Graph(id='aperture-timeline')],
+                        style={'width': '50%', 'display': 'inline-block'}),
+
+                    # Div Container for Mode Pie Chart
+                    html.Div(children=[
+                        dcc.Graph(id='aperture-pie-chart')],
+                        style={'width': '40%', 'display': 'inline-block'}),
+
             ], style={'marginLeft': 40, 'marginRight': 40})]),
             html.Div(id='tabs-content')
         ])])
