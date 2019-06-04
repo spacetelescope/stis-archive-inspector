@@ -390,7 +390,7 @@ class Inspector:
                 ylabel= "Number of Observations"
                 return {
                     'data': timeline_data,
-                    'layout': go.Layout(title=f"{mode} Timeline", hovermode='closest',
+                    'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
                                         xaxis={'title': 'Observing Date'},
                                         yaxis={'title': ylabel})
                 }
@@ -541,6 +541,69 @@ class Inspector:
             return {
                 'data': aper_data,
                 'layout': go.Layout(title=f"{self.instrument} Aperture Usage", hovermode='closest',
+                                    xaxis={'title': 'Aperture'},
+                                    yaxis={'title': ylabel})
+            }
+
+        @app.callback(dash.dependencies.Output('aperture-timeline', 'figure'),
+                      [dash.dependencies.Input('apertures-date-slider', 'value'),
+                       dash.dependencies.Input('apertures-metric-dropdown', 'value'),
+                       dash.dependencies.Input('apertures-plot-with-slider', 'clickData'),
+                       dash.dependencies.Input("apertures-type-checklist", 'values')])
+        def update_aperture_timeline(year_range, aperture_metric, click_data, aperture_obstype):
+            self.aperture_daterange = year_range
+            self.aperture_metric = aperture_metric
+            self.aperture_obstype = aperture_obstype
+            bins = np.arange(self.aperture_daterange[0], self.aperture_daterange[1]+1, 1)
+
+            if click_data is not None:
+                aperture = click_data['points'][0]['x']
+            else:
+                aperture = "52X0.2"
+
+            # Filter observations by obstype
+            filtered_df = apertures_df[(apertures_df['obstype'].isin(self.aperture_obstype))]
+            # Filter observations by aperture
+            filtered_df = filtered_df[(filtered_df['Apertures'].isin([aperture]))]
+            # Filter observations by observation year (decimal)
+            filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                                      (filtered_df['Decimal Year'] <= year_range[1])]
+
+            # Filter apertures by group
+            if self.aperture_metric == 'n-obs':
+                filtered_df = filtered_df['Decimal Year']
+                n_tots = []
+                for i, bin in enumerate(bins):
+                    if bin == bins[-1]:
+                        continue
+                    mask = (np.array(filtered_df) >= bins[i]) * \
+                           (np.array(filtered_df) <= bins[i + 1])
+                    n_tots.append(len(filtered_df[mask]))
+                timeline_data = [go.Bar(x=bins, y=n_tots, opacity=0.8)]
+
+                ylabel= "Number of Observations"
+                return {
+                    'data': timeline_data,
+                    'layout': go.Layout(title=f"{aperture} Usage Timeline", hovermode='closest',
+                                        xaxis={'title': 'Observing Date'},
+                                        yaxis={'title': ylabel})
+                }
+            elif self.aperture_metric == 'exptime':
+
+                filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
+                exp_tots = []
+                for i, bin in enumerate(bins):
+                    if bin == bins[-1]:
+                        continue
+                    mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
+                            (np.array(filtered_df['Decimal Year']) <= bins[i+1])
+                    exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+                timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
+                ylabel = "Total Exposure Time (Seconds)"
+
+            return {
+                'data': timeline_data,
+                'layout': go.Layout(title=f"{aperture} Usage Timeline", hovermode='closest',
                                     xaxis={'title': 'Aperture'},
                                     yaxis={'title': ylabel})
             }
