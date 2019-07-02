@@ -7,13 +7,15 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+import os
+import glob
+
 
 
 class Inspector:
     """Class for interactive inspection of the STIS archive"""
-    def __init__(self, outdir='./', use_csv=False, gen_csv=True, datatype='S', instrument='STIS'):
+    def __init__(self, outdir='./', gen_csv=True, datatype='S', instrument='STIS'):
         self.outdir = outdir
-        self.use_csv = use_csv
         self.csv_name = "stis_archive.csv"
         self.gen_csv = gen_csv
         self.datatype = datatype
@@ -33,15 +35,21 @@ class Inspector:
         self.aperture_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
         self.aperture_metric = "n-obs"
 
-    def generate_from_csv(self):
+        if gen_csv:
+            self.generate_csv_from_mast()
+
+        self.generate_dataframe_from_csv()
+        self.load_dataframe_into_dash()
+
+    def generate_dataframe_from_csv(self):
         """Generate a Pandas DataFrame from an existing csv metadata file"""
-        self.mast = pd.read_csv(self.csv_name)
+        self.mast = pd.read_csv(self.csv_name, low_memory=False)
         self.mast = self.mast[self.mast.keys()[1:]]
 
         return self.mast
 
-    def generate_from_mast(self):
-        """Generate a Pandas DataFrame from querying MAST"""
+    def generate_csv_from_mast(self):
+        """Generate a csv file of the STIS archive from querying MAST"""
 
         # Determine if we want 'science', 'calibration', or 'all' datasets:
         datatype = self.datatype.upper()
@@ -99,6 +107,8 @@ class Inspector:
             except ValueError:
                 pass  # Sad years with no data
 
+
+
         # Concatenate individual years together:
         mast = pd.concat(all_years)
 
@@ -107,8 +117,8 @@ class Inspector:
         mast['obstype'] = ['Imaging' if 'MIR' in x else 'Spectroscopic' for x in mast['Filters/Gratings']]
         mast.loc[mast['Apertures'] == '50CORON', 'obstype'] = 'Coronagraphic'
         mast['Instrument Config'] = [x.strip() for x in mast['Instrument Config']]
-        self.mast = mast
-        return self.mast
+
+        mast.to_csv("stis_archive.csv")
 
     def dt_to_dec(self, dt):
         """Convert a datetime to decimal year."""
@@ -666,6 +676,9 @@ class Inspector:
 
     if __name__ == "__main__":
         from inspector import Inspector
-        inspec = Inspector()
-        inspec.generate_from_csv()
-        inspec.load_dataframe_into_dash()
+
+        if os.getcwd() + "/stis_archive.csv" not in glob.glob(os.getcwd() + "/*"):
+            inspec = Inspector(gen_csv=True)
+        else:
+            inspec = Inspector(gen_csv=False)
+
