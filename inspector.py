@@ -197,14 +197,14 @@ class Inspector:
                                                {'label': "NUV-MAMA", 'value': 'STIS/NUV-MAMA'},
                                                {'label': "FUV-MAMA", 'value': 'STIS/FUV-MAMA'}
                                                ],
-                                      values=self.mode_detectors)
+                                      value=self.mode_detectors)
                     ], style={'width': '25%', 'display': 'inline-block'}),
                     # Div Container for obstype checklist (positioned middle)
                     html.Div(children=[
                         dcc.Checklist(id="modes-type-checklist",
                                       options=[{'label': "Imaging Modes", 'value': 'Imaging'},
                                                {'label': "Spectroscopic Modes", 'value': 'Spectroscopic'}
-                                               ], values=self.selected_modes)
+                                               ], value=self.selected_modes)
                                         ], style={'width': '25%', 'display': 'inline-block'}),
                     # Div Container for metric chooser (positioned far right)
                     html.Div(children=[
@@ -245,7 +245,7 @@ class Inspector:
                                                {'label': "NUV-MAMA", 'value': 'STIS/NUV-MAMA'},
                                                {'label': "FUV-MAMA", 'value': 'STIS/FUV-MAMA'}
                                                ],
-                                      values=self.mode_detectors)
+                                      value=self.mode_detectors)
                     ], style={'width': '25%', 'display': 'inline-block'}),
 
                     # Div Container for obstype checklist (positioned middle)
@@ -254,7 +254,7 @@ class Inspector:
                                       options=[{'label': "Imaging Observations", 'value': 'Imaging'},
                                                {'label': "Spectroscopic Observations", 'value': 'Spectroscopic'},
                                                {'label': "Coronagraphic Observations", 'value': 'Coronagraphic'}
-                                               ], values=self.aperture_obstype)
+                                               ], value=self.aperture_obstype)
                     ], style={'width': '25%', 'display': 'inline-block'}),
                     # Div Container for metric chooser (positioned far right)
                     html.Div(children=[
@@ -293,8 +293,8 @@ class Inspector:
         # Mode Callbacks
         @app.callback(dash.dependencies.Output('modes-plot-with-slider', 'figure'),
                       [dash.dependencies.Input('modes-date-slider', 'value'),
-                       dash.dependencies.Input('modes-type-checklist', 'values'),
-                       dash.dependencies.Input('modes-detector-checklist', 'values'),
+                       dash.dependencies.Input('modes-type-checklist', 'value'),
+                       dash.dependencies.Input('modes-detector-checklist', 'value'),
                        dash.dependencies.Input('modes-metric-dropdown', 'value')])
         def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
             self.mode_detectors = mode_detectors
@@ -364,7 +364,8 @@ class Inspector:
                     'data': p1_data,
                     'layout': go.Layout(title=f"{self.instrument} Mode Usage", hovermode='closest',
                                         xaxis={'title': 'Mode'},
-                                        yaxis={'title': ylabel})
+                                        yaxis={'title': ylabel},
+                                        width=1600, height=800)
             }
 
         @app.callback(dash.dependencies.Output('mode-timeline', 'figure'),
@@ -399,11 +400,21 @@ class Inspector:
                 timeline_data = [go.Bar(x=bins, y=n_tots, opacity=0.8)]
 
                 ylabel= "Number of Observations"
+                # below code as workaround for getting a bit better dpi out of snapshots of the plot
+                """'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
+                                        xaxis={'title': 'Observing Date'},
+                                        yaxis={'title': ylabel, 'range': [0,350]},
+                                        font=dict(size=22),
+                                        margin=dict(l=120,b=120),
+                                        height=1000,
+                                        width=2000,
+                                        )"""
                 return {
                     'data': timeline_data,
                     'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
                                         xaxis={'title': 'Observing Date'},
-                                        yaxis={'title': ylabel})
+                                        yaxis={'title': ylabel},
+                                        )
                 }
             elif self.mode_metric == 'exptime':
 
@@ -427,8 +438,8 @@ class Inspector:
 
         @app.callback(dash.dependencies.Output('mode-pie-chart', 'figure'),
                       [dash.dependencies.Input('modes-date-slider', 'value'),
-                       dash.dependencies.Input('modes-type-checklist', 'values'),
-                       dash.dependencies.Input('modes-detector-checklist', 'values'),
+                       dash.dependencies.Input('modes-type-checklist', 'value'),
+                       dash.dependencies.Input('modes-detector-checklist', 'value'),
                        dash.dependencies.Input('modes-metric-dropdown', 'value')])
         def update_mode_pie_figure(year_range, selected_modes, mode_detectors, mode_metric):
             self.mode_detectors = mode_detectors
@@ -488,8 +499,8 @@ class Inspector:
         # Aperture Callbacks
         @app.callback(dash.dependencies.Output('apertures-plot-with-slider', 'figure'),
                       [dash.dependencies.Input('apertures-date-slider', 'value'),
-                       dash.dependencies.Input('apertures-type-checklist', 'values'),
-                       dash.dependencies.Input('apertures-detector-checklist', 'values'),
+                       dash.dependencies.Input('apertures-type-checklist', 'value'),
+                       dash.dependencies.Input('apertures-detector-checklist', 'value'),
                        dash.dependencies.Input('apertures-metric-dropdown', 'value')])
         def update_aperture_figure(year_range, aperture_obstype, aperture_detectors, aperture_metric):
             self.aperture_detectors = aperture_detectors
@@ -553,14 +564,15 @@ class Inspector:
                 'data': aper_data,
                 'layout': go.Layout(title=f"{self.instrument} Aperture Usage", hovermode='closest',
                                     xaxis={'title': 'Aperture'},
-                                    yaxis={'title': ylabel})
+                                    yaxis={'title': ylabel},
+                                    width=1600, height=800)
             }
 
         @app.callback(dash.dependencies.Output('aperture-timeline', 'figure'),
                       [dash.dependencies.Input('apertures-date-slider', 'value'),
                        dash.dependencies.Input('apertures-metric-dropdown', 'value'),
                        dash.dependencies.Input('apertures-plot-with-slider', 'clickData'),
-                       dash.dependencies.Input("apertures-type-checklist", 'values')])
+                       dash.dependencies.Input("apertures-type-checklist", 'value')])
         def update_aperture_timeline(year_range, aperture_metric, click_data, aperture_obstype):
             self.aperture_daterange = year_range
             self.aperture_metric = aperture_metric
@@ -621,8 +633,8 @@ class Inspector:
 
         @app.callback(dash.dependencies.Output('aperture-pie-chart', 'figure'),
                       [dash.dependencies.Input('apertures-date-slider', 'value'),
-                       dash.dependencies.Input('apertures-type-checklist', 'values'),
-                       dash.dependencies.Input('apertures-detector-checklist', 'values'),
+                       dash.dependencies.Input('apertures-type-checklist', 'value'),
+                       dash.dependencies.Input('apertures-detector-checklist', 'value'),
                        dash.dependencies.Input('apertures-metric-dropdown', 'value')])
         def update_aperture_pie_figure(year_range, aperture_obstype, aperture_detectors, aperture_metric):
             self.aperture_detectors = aperture_detectors
@@ -672,7 +684,7 @@ class Inspector:
                 'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
             }
 
-        app.run_server(debug=True)
+        app.run_server(debug=True, port=5500)
 
     if __name__ == "__main__":
         from inspector import Inspector
