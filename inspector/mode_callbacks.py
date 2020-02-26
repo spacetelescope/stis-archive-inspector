@@ -105,3 +105,137 @@ def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
                                 yaxis={'title': ylabel},
                                 width=1600, height=800)
             }
+
+
+@app.callback(Output('mode-timeline', 'figure'),
+            [Input('modes-date-slider', 'value'),
+             Input('modes-metric-dropdown', 'value'),
+             Input('modes-plot-with-slider', 'clickData')])
+def update_mode_timeline(year_range, mode_metric, click_data):
+    mode_daterange = year_range
+    bins = np.arange(mode_daterange[0], mode_daterange[1]+1, 1)
+    if click_data is not None:
+        mode = click_data['points'][0]['x']
+    else:
+        mode = "G140L"
+    # Filter observations by mode
+    filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
+    # Filter observations by observation year (decimal)
+    filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                              (filtered_df['Decimal Year'] <= year_range[1])]
+
+    # Filter modes by group
+    if mode_metric == 'n-obs':
+        filtered_df = filtered_df['Decimal Year']
+        n_tots = []
+        for i, bin in enumerate(bins):
+            if bin == bins[-1]:
+                continue
+            mask = (np.array(filtered_df) >= bins[i]) * \
+                   (np.array(filtered_df) <= bins[i + 1])
+            n_tots.append(len(filtered_df[mask]))
+        timeline_data = [go.Bar(x=bins, y=n_tots, opacity=0.8)]
+
+        ylabel = "Number of Observations"
+        # below code as workaround for getting a bit better dpi out of snapshots of the plot
+        """'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
+                                xaxis={'title': 'Observing Date'},
+                                yaxis={'title': ylabel,
+                                    'range': [0,350]},
+                                font=dict(size=22),
+                                margin=dict(l=120,b=120),
+                                height=1000,
+                                width=2000,
+                                )"""
+        return {
+                'data': timeline_data,
+                'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
+                                    xaxis={'title': 'Observing Date'},
+                                    yaxis={'title': ylabel})
+                }
+    elif mode_metric == 'exptime':
+
+        filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
+        exp_tots = []
+        for i, bin in enumerate(bins):
+            if bin == bins[-1]:
+                continue
+            mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
+                   (np.array(filtered_df['Decimal Year']) <= bins[i+1])
+            exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+        timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
+        ylabel = "Total Exposure Time (Seconds)"
+
+        return {
+            'data': timeline_data,
+            'layout': go.Layout(title=f"{mode} Usage Timeline", hovermode='closest',
+                                xaxis={'title': 'Mode'},
+                                yaxis={'title': ylabel})
+                }
+
+@app.callback(Output('mode-pie-chart', 'figure'),
+            [Input('modes-date-slider', 'value'),
+            Input('modes-type-checklist', 'value'),
+            Input('modes-detector-checklist', 'value'),
+            Input('modes-metric-dropdown', 'value')])
+def update_mode_pie_figure(year_range, selected_modes, mode_detectors, mode_metric):
+    mode_daterange = year_range
+
+    instrument = config['inspector']['instrument']
+
+    spec_mode_groups = config['modes']['spec_groups']
+    spec_mode_labels = config['modes']['spec_labels']
+
+    im_mode_groups = config['modes']['im_groups']
+    im_mode_labels = config['modes']['im_labels']
+
+    mode_groups = []
+    mode_labels = []
+
+    if "Imaging" in selected_modes:
+        mode_groups += im_mode_groups
+        mode_labels += im_mode_labels
+    if "Spectroscopic" in selected_modes:
+        mode_groups += spec_mode_groups
+        mode_labels += spec_mode_labels
+
+    # Filter observations by detector
+    filtered_df = modes_df[(modes_df['Instrument Config'].isin(mode_detectors))]
+    # Filter observations by observation year (decimal)
+    filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
+                              (filtered_df['Decimal Year'] <= year_range[1])]
+    # Filter modes by group
+    if mode_metric == 'n-obs':
+        # Just look at filters and gratings
+        filtered_df = filtered_df['Filters/Gratings']
+        n_tots = []
+        modes = []
+        for grp, label in zip(mode_groups, mode_labels):
+            # grp is a list of modes, label is the category
+            for mode in grp:
+                n_tot = len(filtered_df[filtered_df.isin([mode])])
+                n_tots.append(n_tot)
+                modes.append(mode)
+
+        # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
+        # it is the better choice in this case
+        pie_data = [go.Pie(labels=modes, values=n_tots, opacity=0.8)]
+
+    elif mode_metric == 'exptime':
+        filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
+        exp_tots = []
+        modes = []  # Need this for avoiding empty bars in plotting
+        for grp, label in zip(mode_groups, mode_labels):
+            # grp is a list of modes, label is the category
+            mode_exp_tots = []
+            for mode in grp:
+                exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
+                exp_tots.append(exp_tot)
+                modes.append(mode)
+
+        pie_data = [go.Pie(labels=modes, values=exp_tots, opacity=0.8)]
+
+    return {
+        'data': pie_data,
+        'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
+            }
