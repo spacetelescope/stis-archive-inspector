@@ -9,7 +9,7 @@ from .config import config
 from .fetch_metadata import generate_dataframe_from_csv, generate_csv_from_mast
 from .server import app
 from .utils import dt_to_dec
-from . import mode_callbacks
+from . import mode_callbacks, aperture_callbacks
 
 
 # Read in Config file
