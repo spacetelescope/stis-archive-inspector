@@ -6,8 +6,8 @@ import numpy as np
 from datetime import datetime
 
 from .config import config
-from .server import app
 from .fetch_metadata import generate_dataframe_from_csv, generate_csv_from_mast
+from .server import app
 from .utils import dt_to_dec
 from . import mode_callbacks
 
@@ -33,7 +33,6 @@ aperture_daterange = []
 aperture_detectors = ["STIS/CCD",
                            "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
 aperture_metric = "n-obs"
-
 mast = generate_dataframe_from_csv(outdir+csv_name)
 
 # Plot 1: Modes --------------------------------------------------
