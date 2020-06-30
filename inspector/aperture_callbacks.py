@@ -96,8 +96,7 @@ def update_aperture_figure(year_range, aperture_obstype, aperture_detectors, ape
         'data': aper_data,
         'layout': go.Layout(title=f"{instrument} Aperture Usage", hovermode='closest',
                             xaxis={'title': 'Aperture'},
-                            yaxis={'title': ylabel},
-                            width=1600, height=800)
+                            yaxis={'title': ylabel})
             }
 
 @app.callback(Output('aperture-timeline', 'figure'),
@@ -159,7 +158,7 @@ def update_aperture_timeline(year_range, aperture_metric, click_data, aperture_o
                                 xaxis={'title': 'Aperture'},
                                 yaxis={'title': ylabel})
             }
-
+"""
 @app.callback(Output('aperture-pie-chart', 'figure'),
             [Input('apertures-date-slider', 'value'),
             Input('apertures-type-checklist', 'value'),
@@ -210,3 +209,4 @@ def update_aperture_pie_figure(year_range, aperture_obstype, aperture_detectors,
             'data': pie_data,
             'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
             }
+"""

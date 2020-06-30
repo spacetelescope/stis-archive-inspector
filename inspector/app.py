@@ -181,25 +181,36 @@ app.layout = html.Div(children=[
             # Div Container for Graph and Range Slider
             html.Div(children=[
                 dcc.Graph(id='modes-plot-with-slider'),
+                            ],
+                     style={'width': '60%', 'display': 'inline-block', 'padding': 20}),
+            # Div Container for Mode Timeline
+            html.Div(children=[
+                dcc.Graph(id='mode-timeline'),
+                #dcc.Graph(id='mode-pie-chart')
+                ],
+                          style={'width': '35%', 'display': 'inline-block'}),
+
+            # Div Container for Mode Pie Chart
+            #html.Div(children=[
+            #   dcc.Graph(id='mode-pie-chart')],
+            #              style={'width': '40%', 'display': 'inline-block'}),
+
+            html.Div(children=[
                 dcc.RangeSlider(id='modes-date-slider',
                                 min=int(min(modes_df['Decimal Year'])),
                                 max=int(max(modes_df['Decimal Year'])) + 1,
-                                value=[int(min(modes_df['Decimal Year'])), 
+                                value=[int(min(modes_df['Decimal Year'])),
                                        int(max(modes_df['Decimal Year'])) + 1],
-                                marks={str(int(year)): str(int(year)) 
-                                        for year in modes_df['Decimal Year'].unique()},
-                                included=True)],
-                          style={'padding': 20}),
-            # Div Container for Mode Timeline
-            html.Div(children=[
-                dcc.Graph(id='mode-timeline')],
-                          style={'width': '50%', 'display': 'inline-block'}),
+                                marks={str(int(year)): str(int(year))
+                                       for year in modes_df['Decimal Year'].unique()},
+                                included=True)
+            ], style={'padding': 20}),
+                          ]),
+            
+                          
+                          ]),
 
-            # Div Container for Mode Pie Chart
-            html.Div(children=[
-                dcc.Graph(id='mode-pie-chart')],
-                          style={'width': '40%', 'display': 'inline-block'}),
-                          ])]),
+            
 
         # Apertures Tab
         dcc.Tab(label='Apertures', children=[html.Div(children=[
@@ -237,6 +248,17 @@ app.layout = html.Div(children=[
             # Div Container for Graph and Range Slider
             html.Div(children=[
                 dcc.Graph(id='apertures-plot-with-slider'),
+                ],
+                style={'width': '60%', 'display': 'inline-block', 'padding': 20}),
+
+            # Div Container for Mode Timeline
+            html.Div(children=[
+                dcc.Graph(id='aperture-timeline'),
+                #dcc.Graph(id='aperture-pie-chart')
+                ],
+                style={'width': '35%', 'display': 'inline-block'}),
+
+            html.Div(children=[
                 dcc.RangeSlider(id='apertures-date-slider',
                                 min=int(min(modes_df['Decimal Year'])),
                                 max=int(
@@ -245,19 +267,8 @@ app.layout = html.Div(children=[
                                        int(max(modes_df['Decimal Year'])) + 1],
                                 marks={str(int(year)): str(int(year)) for year in
                                        modes_df['Decimal Year'].unique()},
-                                included=True)],
-                     style={'padding': 20}),
-
-            # Div Container for Mode Timeline
-            html.Div(children=[
-                dcc.Graph(id='aperture-timeline')],
-                style={'width': '50%', 'display': 'inline-block'}),
-
-            # Div Container for Mode Pie Chart
-            html.Div(children=[
-                dcc.Graph(id='aperture-pie-chart')],
-                style={'width': '40%', 'display': 'inline-block'}),
-
+                                included=True)
+            ], style={'padding':20}),
         ])]),
         html.Div(id='tabs-content')
     ])])

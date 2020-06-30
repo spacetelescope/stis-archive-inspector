@@ -102,8 +102,7 @@ def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
             'data': p1_data,
             'layout': go.Layout(title=f"{instrument} Mode Usage", hovermode='closest',
                                 xaxis={'title': 'Mode'},
-                                yaxis={'title': ylabel},
-                                width=1600, height=800)
+                                yaxis={'title': ylabel})
             }
 
 
@@ -173,7 +172,7 @@ def update_mode_timeline(year_range, mode_metric, click_data):
                                 xaxis={'title': 'Mode'},
                                 yaxis={'title': ylabel})
                 }
-
+"""
 @app.callback(Output('mode-pie-chart', 'figure'),
             [Input('modes-date-slider', 'value'),
             Input('modes-type-checklist', 'value'),
@@ -240,3 +239,4 @@ def update_mode_pie_figure(year_range, selected_modes, mode_detectors, mode_metr
         'data': pie_data,
         'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
             }
+"""
