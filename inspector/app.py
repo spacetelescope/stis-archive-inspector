@@ -9,7 +9,7 @@ from .config import config
 from .fetch_metadata import generate_dataframe_from_csv, generate_csv_from_mast
 from .server import app
 from .utils import dt_to_dec
-from . import mode_callbacks, aperture_callbacks
+from . import overview_callbacks, mode_callbacks, aperture_callbacks
 
 
 # Read in Config file
@@ -20,6 +20,11 @@ datatype = config['inspector']['datatype']
 instrument = config['inspector']['instrument']
 stylesheets = config['inspector']['stylesheets']
 mast = config['inspector']['mast']
+
+# Overview Parameters -- affected by callbacks
+overview_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
+overview_daterange = []
+overview_metric = "n-obs"
 
 # Mode Parameters -- affected by callbacks
 selected_modes = ["Spectroscopic"]
@@ -34,6 +39,15 @@ aperture_detectors = ["STIS/CCD",
                            "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
 aperture_metric = "n-obs"
 mast = generate_dataframe_from_csv(outdir+csv_name)
+
+# Overview Page Plots --------------------------------------------
+overview_df = mast[["Start Time", "obstype","Instrument Config","Exp Time"]]
+start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
+                        for start_time in overview_df['Start Time']])
+
+overview_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+overview_df = overview_df[["Decimal Year",
+                     "obstype", "Instrument Config", "Exp Time"]]
 
 # Plot 1: Modes --------------------------------------------------
 spec_mode_groups = config['modes']['spec_groups']
@@ -83,6 +97,60 @@ app.layout = html.Div(children=[
 
     # Modes Tab
     dcc.Tabs(id="tabs", children=[
+
+        dcc.Tab(label='Overview', children=[
+            # Div Container for metric chooser (positioned far right)
+
+
+            html.Div(children=[
+                html.H4(id="stis-intro",children="Introduction to STIS"),
+
+                html.P("""
+                The Space Telescope Imaging Spectrograph(STIS), 
+                installed on the Hubble Space Telescope during Servicing Mission 2 (1997).
+                STIS provides spatially resolved spectroscopy from 1150 to 10,300 Å at low 
+                to medium spectral resolution, high spatial resolution echelle 
+                spectroscopy in the ultraviolet (UV), solar-blind imaging in the UV, 
+                time tagging of photons in the UV for high time resolution, 
+                and direct and coronagraphic imaging in the optical. 
+
+                STIS was successfully repaired during the fourth HST servicing mission (SM4) 
+                in May 2009 and has resumed science operations with all channels. 
+                This followed a nearly five year long suspension of science operations 
+                that began in August 2004, when a power supply in the Side-2 electronics had failed.
+                """),
+
+                html.H4(id="stis-stats", children="STIS Archive Statistics"),
+
+                html.P(f"""Total STIS Observations: {len(mast)}"""),
+                html.P(f"""Total STIS Exposure Time: {np.round(np.sum(mast['Exp Time'])/60/60,2)} Hours"""),
+                html.P(f"""Earliest Observation in Archive: {min(mast['Start Time'])}"""),
+                html.P(f"""Most Recent Observation in Archive: {max(mast['Start Time'])}""")
+                ],
+                style={'width': '40%', 'display': 'inline-block', 
+                       'padding': 20, 'vertical-align': 'top'}),
+
+            html.Div(children=[dcc.Dropdown(id="detector-metric-dropdown",
+                                            options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
+                                                     {'label': "Total Exposure Time (Hours)", 'value': 'exptime'}],
+                                            value=overview_metric, clearable=False),
+                dcc.Graph(id='detector-pie-chart'),
+                              ],
+                     style={'width': '40%', 'display': 'inline-block', 'padding': 20}),
+
+            html.Div(children=[
+                dcc.RangeSlider(id='detector-date-slider',
+                                min=int(min(overview_df['Decimal Year'])),
+                                max=int(max(overview_df['Decimal Year'])) + 1,
+                                value=[int(min(overview_df['Decimal Year'])),
+                                       int(max(overview_df['Decimal Year'])) + 1],
+                                marks={str(int(year)): str(int(year))
+                                       for year in overview_df['Decimal Year'].unique()},
+                                included=True)
+            ])]),
+
+            
+
         dcc.Tab(label='Modes', children=[html.Div(children=[
 
             # Div Container for detector checklist (positioned far left)
@@ -131,7 +199,7 @@ app.layout = html.Div(children=[
             html.Div(children=[
                 dcc.Graph(id='mode-pie-chart')],
                           style={'width': '40%', 'display': 'inline-block'}),
-                          ], style={'marginLeft': 40, 'marginRight': 40})]),
+                          ])]),
 
         # Apertures Tab
         dcc.Tab(label='Apertures', children=[html.Div(children=[
@@ -190,7 +258,6 @@ app.layout = html.Div(children=[
                 dcc.Graph(id='aperture-pie-chart')],
                 style={'width': '40%', 'display': 'inline-block'}),
 
-        ], style={'marginLeft': 40, 'marginRight': 40})]),
+        ])]),
         html.Div(id='tabs-content')
     ])])
-

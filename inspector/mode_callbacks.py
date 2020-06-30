@@ -114,6 +114,7 @@ def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
 def update_mode_timeline(year_range, mode_metric, click_data):
     mode_daterange = year_range
     bins = np.arange(mode_daterange[0], mode_daterange[1]+1, 1)
+    print(click_data)
     if click_data is not None:
         mode = click_data['points'][0]['x']
     else:
