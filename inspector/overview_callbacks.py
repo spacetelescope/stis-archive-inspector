@@ -35,21 +35,21 @@ def update_detector_pie_figure(year_range, overview_metric):
     # Filter modes by group
     if overview_metric == 'n-obs':
         n_tots = []
-        detectors = filtered_df['Instrument Config'].unique()
+        detectors = np.sort(filtered_df['Instrument Config'].unique())
         for detector in detectors:
             n_tots.append(np.sum(filtered_df['Instrument Config'] == detector))
-
+        print(detectors, n_tots)
         # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
         # it is the better choice in this case
-        pie_data = [go.Pie(labels=detectors, values=n_tots, opacity=0.8)]
+        pie_data = [go.Pie(labels=detectors, values=n_tots, opacity=0.8,sort=False)]
 
     elif overview_metric == 'exptime':
         exp_tots = []
-        detectors = filtered_df['Instrument Config'].unique()
+        detectors = np.sort(filtered_df['Instrument Config'].unique())
         for detector in detectors:
-            exp_tots.append(np.sum(filtered_df['Exp Time'][filtered_df['Instrument Config'] == detector]))
-
-        pie_data = [go.Pie(labels=detectors, values=exp_tots, opacity=0.8)]
+            exp_tots.append(np.sum(filtered_df['Exp Time'][filtered_df['Instrument Config'] == detector])/60/60)
+        print(detectors, exp_tots)
+        pie_data = [go.Pie(labels=detectors, values=exp_tots, opacity=0.8,sort=False)]
 
     return {
         'data': pie_data,
