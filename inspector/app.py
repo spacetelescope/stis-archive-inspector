@@ -9,7 +9,7 @@ from .config import config
 from .fetch_metadata import generate_dataframe_from_csv, generate_csv_from_mast
 from .server import app
 from .utils import dt_to_dec
-from . import overview_callbacks, mode_callbacks, aperture_callbacks
+from . import overview_callbacks, mode_callbacks, aperture_callbacks, wavelen_callbacks
 
 
 # Read in Config file
@@ -25,6 +25,12 @@ mast = config['inspector']['mast']
 overview_detectors = ["STIS/CCD", "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
 overview_daterange = []
 overview_metric = "n-obs"
+
+# Wavelength Parameters -- affected by callbacks
+wav_obstype = ["Spectroscopic"]
+wav_daterange = []
+wav_detectors = ["STIS/NUV-MAMA", "STIS/FUV-MAMA"]
+wav_metric = "n-obs"
 
 # Mode Parameters -- affected by callbacks
 selected_modes = ["Spectroscopic"]
@@ -49,7 +55,16 @@ overview_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
 overview_df = overview_df[["Decimal Year",
                      "obstype", "Instrument Config", "Exp Time"]]
 
-# Plot 1: Modes --------------------------------------------------
+# Wavelength Page Plots --------------------------------------------
+wav_df = mast[["Central Wavelength","Start Time", "obstype", "Instrument Config", "Exp Time"]]
+start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
+                        for start_time in wav_df['Start Time']])
+
+wav_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+wav_df = wav_df[["Central Wavelength", "Decimal Year",
+                           "obstype", "Instrument Config", "Exp Time"]]
+
+# Modes Page Plots --------------------------------------------------
 spec_mode_groups = config['modes']['spec_groups']
 spec_mode_labels = config['modes']['spec_labels']
 
@@ -75,7 +90,7 @@ modes_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
 modes_df = modes_df[["Filters/Gratings", "Decimal Year",
                      "obstype", "Instrument Config", "Exp Time"]]
 
-# Plot 2: Apertures ------------------------------------------------
+# Apertures Page Plots ------------------------------------------------
 aperture_groups = config['apertures']['groups']
 aperture_labels = config['apertures']['labels']
 
@@ -149,7 +164,52 @@ app.layout = html.Div(children=[
                                 included=True)
             ])]),
 
+        dcc.Tab(label="Wavelength", children=[
+            # Div Container for detector checklist (positioned far left)
+            html.Div(children=[
+                dcc.Checklist(id="wavelength-detector-checklist",
+                              options=[{'label': "CCD", 'value': 'STIS/CCD'},
+                                       {'label': "NUV-MAMA",
+                                           'value': 'STIS/NUV-MAMA'},
+                                       {'label': "FUV-MAMA", 'value': 'STIS/FUV-MAMA'}],
+                              value=wav_detectors)
+            ], style={'width': '25%', 'display': 'inline-block'}),
+
+            # Div Container for obstype checklist (positioned middle)
+            html.Div(children=[
+                dcc.Checklist(id="wavelength-type-checklist",
+                              options=[{'label': "Imaging Observations", 'value': 'Imaging'},
+                                       {'label': "Spectroscopic Observations", 'value': 'Spectroscopic'}],
+                              value=wav_obstype)
+            ], style={'width': '25%', 'display': 'inline-block','vertical-align':'top'}),
+
+            # Div Container for metric chooser (positioned far right)
+            html.Div(children=[
+                dcc.Dropdown(id="wavelength-metric-dropdown",
+                             options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
+                                      {'label': "Total Exposure Time", 'value': 'exptime'}],
+                             value=wav_metric, clearable=False)
+            ], style={'width': '40%', 'display': 'inline-block'}),
+
+            # Div Container for Graph and Range Slider
+            html.Div(children=[
+                dcc.Graph(id='wavelength-histogram'),
+            ],
+                style={'width': '95%', 'display': 'inline-block', 'padding': 20}),
+
+            html.Div(children=[
+                dcc.RangeSlider(id='wavelength-date-slider',
+                                min=int(min(wav_df['Decimal Year'])),
+                                max=int(max(wav_df['Decimal Year'])) + 1,
+                                value=[int(min(wav_df['Decimal Year'])),
+                                       int(max(wav_df['Decimal Year'])) + 1],
+                                marks={str(int(year)): str(int(year))
+                                       for year in wav_df['Decimal Year'].unique()},
+                                included=True)
+            ], style={'padding': 20}),
+
             
+        ]),    
 
         dcc.Tab(label='Modes', children=[html.Div(children=[
 
@@ -168,7 +228,7 @@ app.layout = html.Div(children=[
                               options=[{'label': "Imaging Modes", 'value': 'Imaging'},
                                        {'label': "Spectroscopic Modes",'value': 'Spectroscopic'}], 
                                        value=selected_modes)
-                              ], style={'width': '25%', 'display': 'inline-block'}),
+                              ], style={'width': '25%', 'display': 'inline-block','vertical-align':'top'}),
 
             # Div Container for metric chooser (positioned far right)
             html.Div(children=[
