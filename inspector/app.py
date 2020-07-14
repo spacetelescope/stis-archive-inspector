@@ -187,7 +187,7 @@ app.layout = html.Div(children=[
             html.Div(children=[
                 dcc.Dropdown(id="wavelength-metric-dropdown",
                              options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
-                                      {'label': "Total Exposure Time", 'value': 'exptime'}],
+                                      {'label': "Total Exposure Time (Hours)", 'value': 'exptime'}],
                              value=wav_metric, clearable=False)
             ], style={'width': '40%', 'display': 'inline-block'}),
 
@@ -195,7 +195,14 @@ app.layout = html.Div(children=[
             html.Div(children=[
                 dcc.Graph(id='wavelength-histogram'),
             ],
-                style={'width': '95%', 'display': 'inline-block', 'padding': 20}),
+                style={'width': '60%', 'display': 'inline-block', 'padding': 20}),
+
+            # Div Container for Mode Timeline
+            html.Div(children=[
+                dcc.Graph(id='wav-throughputs'),
+                #dcc.Graph(id='mode-pie-chart')
+            ],
+                style={'width': '35%', 'display': 'inline-block'}),
 
             html.Div(children=[
                 dcc.RangeSlider(id='wavelength-date-slider',
@@ -234,7 +241,7 @@ app.layout = html.Div(children=[
             html.Div(children=[
                 dcc.Dropdown(id="modes-metric-dropdown",
                              options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
-                                      {'label': "Total Exposure Time",'value': 'exptime'}], 
+                                      {'label': "Total Exposure Time (Hours)",'value': 'exptime'}], 
                                       value=mode_metric, clearable=False)
                               ], style={'width': '40%', 'display': 'inline-block'}),
 
@@ -301,7 +308,7 @@ app.layout = html.Div(children=[
             html.Div(children=[
                 dcc.Dropdown(id="apertures-metric-dropdown",
                              options=[{'label': "Total Number of Observations", 'value': 'n-obs'},
-                                      {'label': "Total Exposure Time",
+                                      {'label': "Total Exposure Time (Hours)",
                                        'value': 'exptime'}
                                       ], value=aperture_metric, clearable=False)
             ], style={'width': '40%', 'display': 'inline-block'}),
