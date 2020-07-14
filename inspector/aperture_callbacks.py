@@ -84,13 +84,13 @@ def update_aperture_figure(year_range, aperture_obstype, aperture_detectors, ape
 
             new_grp = np.array(grp)[np.array(aperture_exp_tots) != 0.0]
             aperture_exp_tots = np.array(aperture_exp_tots)[np.array(aperture_exp_tots) != 0.0]
-            exp_tots.append(aperture_exp_tots)
+            exp_tots.append(aperture_exp_tots/60/60)
             filtered_groups.append(list(new_grp))
 
         aper_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
                     for grp, exp, label in zip(filtered_groups, exp_tots, aperture_labels)]
 
-        ylabel = "Total Exposure Time (Seconds)"
+        ylabel = "Total Exposure Time (Hours)"
 
     return {
         'data': aper_data,
@@ -148,9 +148,9 @@ def update_aperture_timeline(year_range, aperture_metric, click_data, aperture_o
                 continue
             mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
                    (np.array(filtered_df['Decimal Year']) <= bins[i+1])
-            exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+            exp_tots.append(np.sum(filtered_df['Exp Time'][mask])/60/60)
         timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
-        ylabel = "Total Exposure Time (Seconds)"
+        ylabel = "Total Exposure Time (Hours)"
 
     return {
             'data': timeline_data,

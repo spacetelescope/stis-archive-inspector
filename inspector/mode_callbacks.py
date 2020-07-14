@@ -86,7 +86,7 @@ def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
             mode_exp_tots = []
             for mode in grp:
                 exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
-                mode_exp_tots.append(exp_tot)
+                mode_exp_tots.append(exp_tot/60/60) #convert to hours
 
             new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
             mode_exp_tots = np.array(mode_exp_tots)[np.array(mode_exp_tots) != 0.0]
@@ -96,7 +96,7 @@ def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
         p1_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
                    for grp, exp, label in zip(filtered_groups, exp_tots, mode_labels)]
 
-        ylabel = "Total Exposure Time (Seconds)"
+        ylabel = "Total Exposure Time (Hours)"
 
     return {
             'data': p1_data,
@@ -162,9 +162,9 @@ def update_mode_timeline(year_range, mode_metric, click_data):
                 continue
             mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
                    (np.array(filtered_df['Decimal Year']) <= bins[i+1])
-            exp_tots.append(np.sum(filtered_df['Exp Time'][mask]))
+            exp_tots.append(np.sum(filtered_df['Exp Time'][mask])/60/60)
         timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
-        ylabel = "Total Exposure Time (Seconds)"
+        ylabel = "Total Exposure Time (Hours)"
 
         return {
             'data': timeline_data,
