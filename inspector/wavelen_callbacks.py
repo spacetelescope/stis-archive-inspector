@@ -3,7 +3,6 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
 from datetime import datetime
 import pysynphot
-import math
 
 from .server import app
 from .config import config
