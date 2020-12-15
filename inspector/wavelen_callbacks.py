@@ -3,6 +3,7 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
 from datetime import datetime
 import pysynphot
+import math
 
 from .server import app
 from .config import config
@@ -43,26 +44,40 @@ def update_wavelength_figure(year_range, wav_obstype, wav_detectors, wav_metric)
 
     min_wav = min(filtered_df['Central Wavelength'])
     max_wav = max(filtered_df['Central Wavelength'])
+    binsize = (max_wav - min_wav)/(30/np.sqrt(len(wav_detectors)))
 
     wav_data = []
     for detector in wav_detectors:
         detector_df = filtered_df[filtered_df['Instrument Config'] == detector]
-        wav_data.append(go.Histogram(x=detector_df['Central Wavelength'],
-        name=detector,
-        xbins = dict(
-            start=min_wav,
-            end = max_wav,
-            size = (max_wav - min_wav)/(30/np.sqrt(len(wav_detectors)))),
-        opacity=0.7))
+        
+        if wav_metric == 'n-obs':
+            histbins = np.arange(
+                min_wav, max_wav, binsize)
+            counts, bin_edges = np.histogram(detector_df['Central Wavelength'], bins=histbins)
 
-    bindata = wav_data[0].xbins
+            wav_data.append(go.Bar(x=bin_edges, y = counts, opacity=0.7, name=detector))
 
-    ylabel = "Counts"
+        else: # mode metric is 'exptime'
+            histbins = np.arange(
+                min_wav, max_wav, binsize)
+            counts, bin_edges = np.histogram(
+                detector_df['Central Wavelength'], bins=histbins, weights=detector_df['Exp Time']/60./60.)
+
+            wav_data.append(go.Bar(x=bin_edges, y=counts,
+                                   opacity=0.7, name=detector))
+            
+            #wav_data[0].data = wav_data[0].data/60/60 # convert to hours
+
+    if wav_metric == "n-obs":
+        ylabel = "Counts"
+    else:
+        ylabel = "Total Exposure Time (Hours)"
+    
     return {
         'data': wav_data,
-        'bindata':{'start': bindata.start, 
-                   'end': bindata.end,
-                   'size': bindata.size},
+        'bindata':{'start': min_wav, 
+                   'end': max_wav,
+                   'size': binsize},
         'layout': go.Layout(title=f"{instrument} Central Wavelength Usage", hovermode='closest',
                             xaxis={'title': "Wavelength (Angstroms)"},
                             yaxis={'title': ylabel},
