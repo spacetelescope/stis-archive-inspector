@@ -120,93 +120,26 @@ def update_aperture_timeline(year_range, aperture_metric, click_data, aperture_o
     filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
                               (filtered_df['Decimal Year'] <= year_range[1])]
 
-    # Filter apertures by group
-    if aperture_metric == 'n-obs':
-        filtered_df = filtered_df['Decimal Year']
-        n_tots = []
-        for i, bin in enumerate(bins):
-            if bin == bins[-1]:
-                continue
-            mask = (np.array(filtered_df) >= bins[i]) * \
-                   (np.array(filtered_df) <= bins[i + 1])
+    filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
+    ylabel=''
+    n_tots = []
+    for i, bin in enumerate(bins):
+        if bin == bins[-1]:
+            continue
+        mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
+                (np.array(filtered_df['Decimal Year']) <= bins[i+1])
+
+        if aperture_metric == "n-obs":
             n_tots.append(len(filtered_df[mask]))
-        timeline_data = [go.Bar(x=bins, y=n_tots, opacity=0.8)]
-
-        ylabel = "Number of Observations"
-        return {
-            'data': timeline_data,
-            'layout': go.Layout(title=f"{aperture} Usage Timeline", hovermode='closest',
-                                xaxis={'title': 'Observing Date'},
-                                yaxis={'title': ylabel})
-                }
-    elif aperture_metric == 'exptime':
-
-        filtered_df = filtered_df[['Decimal Year', "Exp Time"]]
-        exp_tots = []
-        for i, bin in enumerate(bins):
-            if bin == bins[-1]:
-                continue
-            mask = (np.array(filtered_df['Decimal Year']) >= bins[i]) * \
-                   (np.array(filtered_df['Decimal Year']) <= bins[i+1])
-            exp_tots.append(np.sum(filtered_df['Exp Time'][mask])/60/60)
-        timeline_data = [go.Bar(x=bins, y=exp_tots, opacity=0.8)]
-        ylabel = "Total Exposure Time (Hours)"
+            ylabel = "Number of Observations"
+        else:
+            n_tots.append(np.sum(filtered_df['Exp Time'][mask])/60/60)
+            ylabel = "Total Exposure Time (Hours)"
+    timeline_data = [go.Bar(x=bins, y=n_tots, opacity=0.8)]
 
     return {
-            'data': timeline_data,
-            'layout': go.Layout(title=f"{aperture} Usage Timeline", hovermode='closest',
+        'data': timeline_data,
+        'layout': go.Layout(title=f"{aperture} Usage Timeline", hovermode='closest',
                                 xaxis={'title': 'Aperture'},
                                 yaxis={'title': ylabel})
-            }
-"""
-@app.callback(Output('aperture-pie-chart', 'figure'),
-            [Input('apertures-date-slider', 'value'),
-            Input('apertures-type-checklist', 'value'),
-            Input('apertures-detector-checklist', 'value'),
-            Input('apertures-metric-dropdown', 'value')])
-def update_aperture_pie_figure(year_range, aperture_obstype, aperture_detectors, aperture_metric):
-    aperture_daterange = year_range
-
-    # Filter observations by obstype
-    filtered_df = apertures_df[(apertures_df['obstype'].isin(aperture_obstype))]
-    # Filter observations by detector
-    filtered_df = filtered_df[(filtered_df['Instrument Config'].isin(mode_detectors))]
-    # Filter observations by observation year (decimal)
-    filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) &
-                              (filtered_df['Decimal Year'] <= year_range[1])]
-    # Filter apertures by group
-    if aperture_metric == 'n-obs':
-        # Just look at filters and gratings
-        filtered_df = filtered_df['Apertures']
-        n_tots = []
-        apertures = []
-        for grp, label in zip(aperture_groups, aperture_labels):
-            # grp is a list of apertures, label is the category
-            for aperture in grp:
-                n_tot = len(filtered_df[filtered_df.isin([aperture])])
-                n_tots.append(n_tot)
-                apertures.append(aperture)
-
-        # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
-        # it is the better choice in this case
-        pie_data = [go.Pie(labels=apertures, values=n_tots, opacity=0.8)]
-
-    elif aperture_metric == 'exptime':
-        filtered_df = filtered_df[['Apertures', "Exp Time"]]
-        exp_tots = []
-        apertures = []  # Need this for avoiding empty bars in plotting
-        for grp, label in zip(aperture_groups, aperture_labels):
-            # grp is a list of apertures, label is the category
-            aperture_exp_tots = []
-            for aperture in grp:
-                exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Apertures'].isin([aperture])])
-                exp_tots.append(exp_tot)
-                apertures.append(aperture)
-
-        pie_data = [go.Pie(labels=apertures, values=exp_tots, opacity=0.8)]
-
-    return {
-            'data': pie_data,
-            'layout': go.Layout(title=f"Relative Usage", hovermode='closest')
-            }
-"""
+    }
