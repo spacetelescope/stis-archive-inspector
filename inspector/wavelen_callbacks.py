@@ -2,7 +2,6 @@ import numpy as np
 from dash.dependencies import Input, Output, State
 import plotly.graph_objs as go
 from datetime import datetime
-import pysynphot
 
 from .server import app
 from .config import config
@@ -84,14 +83,14 @@ def update_wavelength_figure(year_range, wav_obstype, wav_detectors, wav_metric)
                             bargroupgap=0.1)
     }
 
-@app.callback(Output('wav-throughputs', 'figure'),
+@app.callback(Output('wavelength-bin-timeline', 'figure'),
               [Input('wavelength-date-slider', 'value'),
                Input('wavelength-metric-dropdown', 'value'),
                Input('wavelength-histogram', 'clickData'),
                Input("wavelength-type-checklist", 'value'),
                Input('wavelength-detector-checklist', 'value')],
                [State("wavelength-histogram", "figure")])
-def update_wav_throughput_figure(year_range, wav_metric, click_data,
+def update_wav_bin_timeline_figure(year_range, wav_metric, click_data,
 wav_obstype, wav_detectors, figure):
     if click_data is not None:
         bincen = click_data['points'][0]['x']
@@ -101,6 +100,7 @@ wav_obstype, wav_detectors, figure):
     bins = np.arange(figure['bindata']['start'],
                      figure['bindata']['end'],
                      figure['bindata']['size'])
+    timeline_bins = np.arange(year_range[0], year_range[1]+1, 1)
 
     bin_lower = bins[max(np.where(bins < bincen)[0])]
     bin_upper = bins[min(np.where(bins > bincen)[0])]
@@ -123,42 +123,43 @@ wav_obstype, wav_detectors, figure):
     # Find the unique instrument config/ cenwave combinations
     cenwave_df = bin_df[['Instrument Config','Central Wavelength',"Filters/Gratings"]].drop_duplicates(subset=['Central Wavelength'])
     mjd = 'mjd#59038'
-    bp_data = []
-    for row in cenwave_df.iterrows():
-        inst, det = row[1]['Instrument Config'].lower().split('/')
+    timeline_data = []
+    ylabel = ''
+    for index, row in cenwave_df.iterrows():
+        inst, det = row['Instrument Config'].lower().split('/')
         if det != 'ccd':
             det = det.split('-')
             det = det[0]+det[1]
-        mode = row[1]['Filters/Gratings'].lower()
-        try:
-            cenwave = f'c{int(row[1]["Central Wavelength"])}'
-            bp = pysynphot.ObsBandpass(f'{inst},{det},{mode},{cenwave}')
-            bp_mask = bp.throughput != 0.0
-            bp_data.append(go.Scatter(x=bp.wave[bp_mask], y=bp.throughput[bp_mask], 
+        mode = row['Filters/Gratings'].lower()
+        cenwave = f'c{int(row["Central Wavelength"])}'
+
+        #For each unique cenwave, search bin df for all observations and create a year on year line plot
+        setting_df = bin_df[(bin_df['Filters/Gratings'] == row['Filters/Gratings']) & (bin_df['Central Wavelength'] == row['Central Wavelength'])]
+        
+        n_tots = []
+        for i, time_bin in enumerate(timeline_bins):
+            if time_bin == timeline_bins[-1]:
+                continue
+            mask = (np.array(setting_df['Decimal Year']) >= timeline_bins[i]) * \
+                   (np.array(setting_df['Decimal Year']) <= timeline_bins[i + 1])
+            if wav_metric == "n-obs":
+                n_tots.append(len(setting_df[mask]))
+                ylabel = "Number of Observations"
+            else:
+                n_tots.append(np.sum(setting_df['Exp Time'][mask])/60/60)
+                ylabel = "Total Exposure Time (Hours)"
+
+        timeline_data.append(go.Scatter(x=timeline_bins, y=n_tots,
                                   mode='lines',
                                   name=f'{inst},{det},{mode},{cenwave}',
                                   fill='tozeroy',
                                   opacity=0.6))
-                                  
-        except ValueError:
-            try:
-                cenwave = f'i{int(row[1]["Central Wavelength"])}'
-                bp = pysynphot.ObsBandpass(f'{inst},{det},{mode},{cenwave}')
-                bp_mask = bp.throughput != 0.0
-                bp_data.append(go.Scatter(x=bp.wave[bp_mask], y=bp.throughput[bp_mask],
-                                      mode='lines',
-                                      name=f'{inst},{det},{mode},{cenwave}',
-                                      fill='tozeroy',
-                                      opacity=0.6))
-            except ValueError:
-                print(f"failed to grab {det},{mode},{cenwave}")
-                continue
 
-    ylabel = "Throughputs"
+    
     return {
-        'data': bp_data,
-        'layout': go.Layout(title=f"STIS Cenwave Throughputs", hovermode='closest',
-                            xaxis={'title': "Wavelength (Angstroms)"},
+        'data': timeline_data,
+        'layout': go.Layout(title=f"Cenwave Setting Usage in Bin", hovermode='closest',
+                            xaxis={'title': "Year"},
                             yaxis={'title': ylabel,
                                    'type':'log'},
                             showlegend=True)

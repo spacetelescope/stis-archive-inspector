@@ -197,10 +197,9 @@ app.layout = html.Div(children=[
             ],
                 style={'width': '60%', 'display': 'inline-block', 'padding': 20}),
 
-            # Div Container for Mode Timeline
+            # Div Container for Cenwave Timeline
             html.Div(children=[
-                dcc.Graph(id='wav-throughputs'),
-                #dcc.Graph(id='mode-pie-chart')
+                dcc.Graph(id='wavelength-bin-timeline'),
             ],
                 style={'width': '35%', 'display': 'inline-block'}),
 
