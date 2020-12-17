@@ -49,48 +49,32 @@ def update_aperture_figure(year_range, aperture_obstype, aperture_detectors, ape
     filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) & (filtered_df['Decimal Year'] <= year_range[1])]
 
     # Filter apertures by group
-    if aperture_metric == 'n-obs':
-        filtered_df = filtered_df['Apertures']  # Just look at apertures
-        n_tots = []
-        filtered_groups = []  # Need this for avoiding empty bars in plotting
-        for grp, label in zip(aperture_groups, aperture_labels):
-            # grp is a list of apertures, label is the category
-            aperture_n_tots = []
-            for aperture in grp:
-                n_tot = len(filtered_df[filtered_df.isin([aperture])])
+    filtered_df = filtered_df[['Apertures', "Exp Time"]]
+    ylabel=''
+    n_tots = []
+    filtered_groups = []  # Need this for avoiding empty bars in plotting
+    for grp, label in zip(aperture_groups, aperture_labels):
+        # grp is a list of apertures, label is the category
+        aperture_n_tots = []
+        for aperture in grp:
+            if aperture_metric == "n-obs":
+                n_tot = len(filtered_df[filtered_df['Apertures'].isin([aperture])])
                 aperture_n_tots.append(n_tot)
+                ylabel = "Number of Observations"
+            else:
+                n_tot = np.sum(filtered_df['Exp Time'][filtered_df['Apertures'].isin([aperture])])
+                aperture_n_tots.append(n_tot/60/60)
+                ylabel = "Total Exposure Time (Hours)"
 
-            new_grp = np.array(grp)[np.array(aperture_n_tots) != 0.0]
-            aperture_n_tots = np.array(aperture_n_tots)[np.array(aperture_n_tots) != 0.0]
-            n_tots.append(aperture_n_tots)
-            filtered_groups.append(list(new_grp))
+        new_grp = np.array(grp)[np.array(aperture_n_tots) != 0.0]
+        aperture_n_tots = np.array(aperture_n_tots)[np.array(aperture_n_tots) != 0.0]
+        n_tots.append(aperture_n_tots)
+        filtered_groups.append(list(new_grp))
 
-        # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
-        # it is the better choice in this case
-        aper_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
+    # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
+    # it is the better choice in this case
+    aper_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
                      for grp, n, label in zip(filtered_groups, n_tots, aperture_labels)]
-        ylabel = "Number of Observations"
-
-    elif aperture_metric == 'exptime':
-        filtered_df = filtered_df[['Apertures', "Exp Time"]]
-        exp_tots = []
-        filtered_groups = []  # Need this for avoiding empty bars in plotting
-        for grp, label in zip(aperture_groups, aperture_labels):
-            # grp is a list of apertures, label is the category
-            aperture_exp_tots = []
-            for aperture in grp:
-                exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Apertures'].isin([aperture])])
-                aperture_exp_tots.append(exp_tot)
-
-            new_grp = np.array(grp)[np.array(aperture_exp_tots) != 0.0]
-            aperture_exp_tots = np.array(aperture_exp_tots)[np.array(aperture_exp_tots) != 0.0]
-            exp_tots.append(aperture_exp_tots/60/60)
-            filtered_groups.append(list(new_grp))
-
-        aper_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
-                    for grp, exp, label in zip(filtered_groups, exp_tots, aperture_labels)]
-
-        ylabel = "Total Exposure Time (Hours)"
 
     return {
         'data': aper_data,

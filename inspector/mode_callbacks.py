@@ -52,51 +52,35 @@ def update_mode_figure(year_range, selected_modes, mode_detectors, mode_metric):
     # Filter observations by observation year (decimal)
     filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) & 
                               (filtered_df['Decimal Year'] <= year_range[1])]
-    # Filter modes by group
-    if mode_metric == 'n-obs':
         
-        # Just look at filters and gratings
-        filtered_df = filtered_df['Filters/Gratings']
-        n_tots = []
-        filtered_groups = []  # Need this for avoiding empty bars in plotting
-        for grp, label in zip(mode_groups, mode_labels):
-            # grp is a list of modes, label is the category
-            mode_n_tots = []
-            for mode in grp:
-                n_tot = len(filtered_df[filtered_df.isin([mode])])
+    # Just grab the filters and the exposure times
+    filtered_df = filtered_df[['Filters/Gratings','Exp Time']]
+    ylabel=''
+    n_tots = []
+    filtered_groups = []  # Need this for avoiding empty bars in plotting
+    for grp, label in zip(mode_groups, mode_labels):
+        # grp is a list of modes, label is the category
+        mode_n_tots = []
+        for mode in grp:
+            if mode_metric == "n-obs":
+                n_tot = len(filtered_df[filtered_df['Filters/Gratings'].isin([mode])])
                 mode_n_tots.append(n_tot)
-
-            new_grp = np.array(grp)[np.array(mode_n_tots) != 0.0]
-            mode_n_tots = np.array(mode_n_tots)[np.array(mode_n_tots) != 0.0]
-            n_tots.append(mode_n_tots)
-            filtered_groups.append(list(new_grp))
-
-        # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
-        # it is the better choice in this case
-        p1_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
-                   for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
-        ylabel = "Number of Observations"
-
-    elif mode_metric == 'exptime':
-        filtered_df = filtered_df[['Filters/Gratings', "Exp Time"]]
-        exp_tots = []
-        filtered_groups = []  # Need this for avoiding empty bars in plotting
-        for grp, label in zip(mode_groups, mode_labels):
-            # grp is a list of modes, label is the category
-            mode_exp_tots = []
-            for mode in grp:
+                ylabel = "Number of Observations"
+            else:
                 exp_tot = np.sum(filtered_df['Exp Time'][filtered_df['Filters/Gratings'].isin([mode])])
-                mode_exp_tots.append(exp_tot/60/60) #convert to hours
+                mode_n_tots.append(exp_tot/60/60)  # convert to hours
+                ylabel = "Total Exposure Time (Hours)"
 
-            new_grp = np.array(grp)[np.array(mode_exp_tots) != 0.0]
-            mode_exp_tots = np.array(mode_exp_tots)[np.array(mode_exp_tots) != 0.0]
-            exp_tots.append(mode_exp_tots)
-            filtered_groups.append(list(new_grp))
 
-        p1_data = [go.Bar(x=grp, y=exp, name=label, opacity=0.8)
-                   for grp, exp, label in zip(filtered_groups, exp_tots, mode_labels)]
+        new_grp = np.array(grp)[np.array(mode_n_tots) != 0.0]
+        mode_n_tots = np.array(mode_n_tots)[np.array(mode_n_tots) != 0.0]
+        n_tots.append(mode_n_tots)
+        filtered_groups.append(list(new_grp))
 
-        ylabel = "Total Exposure Time (Hours)"
+    # A go.Histogram is better for here, but go.Bar is consistent with the other view in terms of layout so
+    # it is the better choice in this case
+    p1_data = [go.Bar(x=grp, y=n, name=label, opacity=0.8)
+                   for grp, n, label in zip(filtered_groups, n_tots, mode_labels)]
 
     return {
             'data': p1_data,
