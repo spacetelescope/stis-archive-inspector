@@ -3,7 +3,7 @@ config = {
     "inspector":{
         "outdir":"./",
         "csv_name":"stis_archive.csv",
-        "gen_csv":False,
+        "gen_csv":True,
         "datatype":"S",
         "instrument":"STIS",
         "stylesheets":['https://codepen.io/chriddyp/pen/bWLwgP.css'],
