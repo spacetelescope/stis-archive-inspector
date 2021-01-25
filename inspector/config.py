@@ -3,7 +3,7 @@ config = {
     "inspector":{
         "outdir":"./",
         "csv_name":"stis_archive.csv",
-        "gen_csv":True,
+        "gen_csv":False,
         "datatype":"S",
         "instrument":"STIS",
         "stylesheets":['https://codepen.io/chriddyp/pen/bWLwgP.css'],
@@ -30,11 +30,12 @@ config = {
                              "1X0.2", "6X0.06", "6X0.2", "6X0.5", "0.2X0.05ND", "0.3X0.05ND"],
                             ["25MAMA", "50CCD", "50CORON"],
                             ["F25QTZ", "F25SRF2"],
+                            ["F28X50LP"],
                             ["F25ND3", "F25ND5", "F25NDQ1",
                              "F25NDQ2", "F25NDQ3", "F25NDQ4"],
-                            ["F25MGII", "F25CN270", "F25CIII", "F25CN182", "F25LYA"]],
+                   ["F25MGII", "F25CN270", "F25CIII", "F25CN182", "F25LYA", "F28X50OII", "F28X50OIII"]],
         "labels": ["Long Slits", "Neutral-Density-Filtered Long Slits",
                             "Square Apertures", "Full-Field Clear Apertures",
-                            "FUV-MAMA Longpass", "Neutral Density Filters (MAMA)", "Narrow-Band"]
+                            "FUV-MAMA Longpass", "Optical Longpass", "Neutral Density Filters (MAMA)", "Narrow-Band"]
     }
 }
