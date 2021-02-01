@@ -15,6 +15,6 @@ if __name__ == '__main__':
 
     if gen_csv:
         generate_csv_from_mast(csv_name, outdir, datatype, instrument)
-
+    print("Launching server...")
     from inspector.app import app
     app.run_server(port=5500)
