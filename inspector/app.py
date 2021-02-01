@@ -47,20 +47,20 @@ aperture_metric = "n-obs"
 mast = generate_dataframe_from_csv(outdir+csv_name)
 
 # Overview Page Plots --------------------------------------------
-overview_df = mast[["Start Time", "obstype","Instrument Config","Exp Time"]]
+overview_df = mast[["Start Time", "obstype","Instrument Config","Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in overview_df['Start Time']])
 
-overview_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+overview_df.loc[:,'Decimal Year'] = [dt_to_dec(time) for time in start_times]
 overview_df = overview_df[["Decimal Year",
                      "obstype", "Instrument Config", "Exp Time"]]
 
 # Wavelength Page Plots --------------------------------------------
-wav_df = mast[["Central Wavelength","Start Time", "obstype", "Instrument Config", "Exp Time"]]
+wav_df = mast[["Central Wavelength","Start Time", "obstype", "Instrument Config", "Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in wav_df['Start Time']])
 
-wav_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+wav_df.loc[:,'Decimal Year'] = [dt_to_dec(time) for time in start_times]
 wav_df = wav_df[["Central Wavelength", "Decimal Year",
                            "obstype", "Instrument Config", "Exp Time"]]
 
@@ -81,12 +81,12 @@ if "Spectroscopic" in selected_modes:
     mode_labels += spec_mode_labels
 
 modes_df = mast[["Filters/Gratings", "Start Time",
-                      "obstype", "Instrument Config", "Exp Time"]]
+                      "obstype", "Instrument Config", "Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in modes_df['Start Time']])
 
 # Convert to Start Times to Decimal Years
-modes_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+modes_df.loc[:,'Decimal Year'] = [dt_to_dec(time) for time in start_times]
 modes_df = modes_df[["Filters/Gratings", "Decimal Year",
                      "obstype", "Instrument Config", "Exp Time"]]
 
@@ -95,11 +95,11 @@ aperture_groups = config['apertures']['groups']
 aperture_labels = config['apertures']['labels']
 
 apertures_df = mast[["Apertures", "Start Time",
-                          "obstype", "Instrument Config", "Exp Time"]]
+                          "obstype", "Instrument Config", "Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in apertures_df['Start Time']])
 # Convert to Start Times to Decimal Years
-apertures_df['Decimal Year'] = [
+apertures_df.loc[:,'Decimal Year'] = [
     dt_to_dec(time) for time in start_times]
 apertures_df = apertures_df[[
     "Apertures", "Decimal Year", "obstype", "Instrument Config", "Exp Time"]]
