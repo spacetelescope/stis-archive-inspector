@@ -13,11 +13,11 @@ csv_name = config['inspector']['csv_name']
 instrument = config['inspector']['instrument']
 mast = generate_dataframe_from_csv(outdir+csv_name)
 
-wav_df = mast[["Central Wavelength","Start Time", "obstype", "Instrument Config", "Exp Time", "Filters/Gratings"]]
+wav_df = mast[["Central Wavelength","Start Time", "obstype", "Instrument Config", "Exp Time", "Filters/Gratings"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in wav_df['Start Time']])
 
-wav_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+wav_df.loc[:,'Decimal Year'] = [dt_to_dec(time) for time in start_times]
 wav_df = wav_df[["Central Wavelength","Decimal Year",
                  "obstype", "Instrument Config", "Exp Time", "Filters/Gratings"]]
 
