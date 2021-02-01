@@ -12,11 +12,11 @@ outdir = config['inspector']['outdir']
 csv_name = config['inspector']['csv_name']
 mast = generate_dataframe_from_csv(outdir+csv_name)
 
-overview_df = mast[["Start Time", "obstype", "Instrument Config", "Exp Time"]]
+overview_df = mast[["Start Time", "obstype", "Instrument Config", "Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in overview_df['Start Time']])
 
-overview_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+overview_df.loc[:,'Decimal Year'] = [dt_to_dec(time) for time in start_times]
 overview_df = overview_df[["Decimal Year",
                            "obstype", "Instrument Config", "Exp Time"]]
 
