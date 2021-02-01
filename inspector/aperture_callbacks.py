@@ -17,11 +17,11 @@ aperture_groups = config['apertures']['groups']
 aperture_labels = config['apertures']['labels']
 
 apertures_df = mast[["Apertures", "Start Time",
-                     "obstype", "Instrument Config", "Exp Time"]]
+                     "obstype", "Instrument Config", "Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in apertures_df['Start Time']])
 # Convert to Start Times to Decimal Years
-apertures_df['Decimal Year'] = [
+apertures_df.loc[:,'Decimal Year'] = [
     dt_to_dec(time) for time in start_times]
 apertures_df = apertures_df[[
     "Apertures", "Decimal Year", "obstype", "Instrument Config", "Exp Time"]]
