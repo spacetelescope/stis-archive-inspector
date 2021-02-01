@@ -13,11 +13,11 @@ csv_name = config['inspector']['csv_name']
 mast = generate_dataframe_from_csv(outdir+csv_name)
 
 modes_df = mast[["Filters/Gratings", "Start Time",
-                 "obstype", "Instrument Config", "Exp Time"]]
+                 "obstype", "Instrument Config", "Exp Time"]].copy()
 start_times = np.array([datetime.strptime(str(start_time), "%Y-%m-%d %H:%M:%S")
                         for start_time in modes_df['Start Time']])
 # Convert to Start Times to Decimal Years
-modes_df['Decimal Year'] = [dt_to_dec(time) for time in start_times]
+modes_df.loc[:,'Decimal Year'] = [dt_to_dec(time) for time in start_times]
 modes_df = modes_df[["Filters/Gratings", "Decimal Year",
                      "obstype", "Instrument Config", "Exp Time"]]
 
