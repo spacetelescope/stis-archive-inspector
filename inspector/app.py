@@ -121,7 +121,7 @@ app.layout = html.Div(children=[
                 html.H4(id="stis-intro",children="Introduction to STIS"),
 
                 html.P("""
-                The Space Telescope Imaging Spectrograph(STIS), 
+                The Space Telescope Imaging Spectrograph (STIS), 
                 installed on the Hubble Space Telescope during Servicing Mission 2 (1997).
                 STIS provides spatially resolved spectroscopy from 1150 to 10,300 Å at low 
                 to medium spectral resolution, high spatial resolution echelle 
