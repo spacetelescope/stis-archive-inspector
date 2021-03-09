@@ -121,7 +121,7 @@ wav_obstype, wav_detectors, figure):
         filtered_df['Central Wavelength'] <= bin_upper)]
 
     # Find the unique instrument config/ cenwave combinations
-    cenwave_df = bin_df[['Instrument Config','Central Wavelength',"Filters/Gratings"]].drop_duplicates(subset=['Central Wavelength'])
+    cenwave_df = bin_df[['Instrument Config','Central Wavelength',"Filters/Gratings"]].drop_duplicates(subset=['Filters/Gratings','Central Wavelength'])
     mjd = 'mjd#59038'
     timeline_data = []
     ylabel = ''
