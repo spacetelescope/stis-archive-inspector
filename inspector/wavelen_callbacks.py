@@ -153,7 +153,7 @@ wav_obstype, wav_detectors, figure):
                 ylabel = "Total Exposure Time (Hours)"
 
         timeline_data.append(go.Scatter(x=timeline_bins, y=n_tots,
-                                  mode='lines',
+                                  mode='lines+markers',
                                   name=f'{inst},{det},{mode},{cenwave}',
                                   fill='tozeroy',
                                   opacity=0.6))
