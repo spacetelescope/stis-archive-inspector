@@ -98,11 +98,12 @@ wav_obstype, wav_detectors, figure):
         bincen = 2300
 
     bins = np.arange(figure['bindata']['start'],
-                     figure['bindata']['end'],
-                     figure['bindata']['size'])
-    timeline_bins = np.arange(year_range[0], year_range[1]+1, 1)
+                    figure['bindata']['end'],
+                    figure['bindata']['size'])
+                    
+    timeline_bins = np.arange(year_range[0], year_range[1]+2, 1)
 
-    bin_lower = bins[max(np.where(bins < bincen)[0])]
+    bin_lower = bins[max(np.where(bins <= bincen)[0])]
     bin_upper = bins[min(np.where(bins > bincen)[0])]
 
     wav_daterange = year_range
@@ -115,14 +116,13 @@ wav_obstype, wav_detectors, figure):
         filtered_df['Instrument Config'].isin(wav_detectors))]
     # Filter observations by observation year (decimal)
     filtered_df = filtered_df[(filtered_df['Decimal Year'] >= year_range[0]) & (
-        filtered_df['Decimal Year'] <= year_range[1])]
+        filtered_df['Decimal Year'] <= year_range[1]+2)]
     # Filter observations by selected bin
     bin_df = filtered_df[(filtered_df['Central Wavelength'] >= bin_lower) & (
         filtered_df['Central Wavelength'] <= bin_upper)]
 
     # Find the unique instrument config/ cenwave combinations
     cenwave_df = bin_df[['Instrument Config','Central Wavelength',"Filters/Gratings"]].drop_duplicates(subset=['Filters/Gratings','Central Wavelength'])
-    mjd = 'mjd#59038'
     timeline_data = []
     ylabel = ''
     for index, row in cenwave_df.iterrows():
