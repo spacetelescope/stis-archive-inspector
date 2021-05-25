@@ -95,12 +95,15 @@ wav_obstype, wav_detectors, figure):
     if click_data is not None:
         bincen = click_data['points'][0]['x']
     else:
-        bincen = 2300
+        return {
+            'data': None,
+            'layout': go.Layout(title=f"Click on a wavelength bin from the left plot", hovermode='closest')
+        }
 
     bins = np.arange(figure['bindata']['start'],
                     figure['bindata']['end'],
                     figure['bindata']['size'])
-                    
+
     timeline_bins = np.arange(year_range[0], year_range[1]+2, 1)
 
     bin_lower = bins[max(np.where(bins <= bincen)[0])]

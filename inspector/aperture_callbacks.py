@@ -94,7 +94,10 @@ def update_aperture_timeline(year_range, aperture_metric, click_data, aperture_o
     if click_data is not None:
         aperture = click_data['points'][0]['x']
     else:
-        aperture = "52X0.2"
+        return {
+            'data': None,
+            'layout': go.Layout(title=f"Click on an aperture from the left plot", hovermode='closest')
+        }
 
     # Filter observations by obstype
     filtered_df = apertures_df[(apertures_df['obstype'].isin(aperture_obstype))]

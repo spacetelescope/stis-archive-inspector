@@ -101,7 +101,10 @@ def update_mode_timeline(year_range, mode_metric, click_data):
     if click_data is not None:
         mode = click_data['points'][0]['x']
     else:
-        mode = "G140L"
+        return {
+            'data': None,
+            'layout': go.Layout(title=f"Click on a mode from the left plot", hovermode='closest')
+        }
     # Filter observations by mode
     filtered_df = modes_df[(modes_df['Filters/Gratings'].isin([mode]))]
     # Filter observations by observation year (decimal)
