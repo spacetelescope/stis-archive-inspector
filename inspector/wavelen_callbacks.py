@@ -42,7 +42,7 @@ def update_wavelength_figure(year_range, wav_obstype, wav_detectors, wav_metric)
 
     min_wav = min(filtered_df['Central Wavelength'])
     max_wav = max(filtered_df['Central Wavelength'])
-    binsize = (max_wav - min_wav)/(30/np.sqrt(len(wav_detectors)))
+    binsize = (max_wav - min_wav)/(15*np.sqrt(len(wav_detectors)))
 
     wav_data = []
     for detector in wav_detectors:
@@ -79,8 +79,8 @@ def update_wavelength_figure(year_range, wav_obstype, wav_detectors, wav_metric)
         'layout': go.Layout(title=f"{instrument} Central Wavelength Usage", hovermode='closest',
                             xaxis={'title': "Wavelength (Angstroms)"},
                             yaxis={'title': ylabel},
-                            bargap=0.2,
-                            bargroupgap=0.1)
+                            bargap=0.1,
+                            barmode='stack')
     }
 
 @app.callback(Output('wavelength-bin-timeline', 'figure'),
