@@ -8,9 +8,14 @@ from .config import config
 from .fetch_metadata import generate_dataframe_from_csv, generate_csv_from_mast
 from .utils import dt_to_dec
 
-outdir = config['inspector']['outdir']
-csv_name = config['inspector']['csv_name']
-mast = generate_dataframe_from_csv(outdir+csv_name)
+use_apache = config['inspector']['use_apache']
+if use_apache:
+    mast = generate_dataframe_from_csv(
+        "https://www.stsci.edu/~STIS/stis_archive.csv")
+else:
+    outdir = config['inspector']['outdir']
+    csv_name = config['inspector']['csv_name']
+    mast = generate_dataframe_from_csv(outdir+csv_name)
 
 modes_df = mast[["Filters/Gratings", "Start Time",
                  "obstype", "Instrument Config", "Exp Time"]].copy()

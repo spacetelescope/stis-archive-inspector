@@ -15,6 +15,7 @@ from . import overview_callbacks, mode_callbacks, aperture_callbacks, wavelen_ca
 # Read in Config file
 outdir = config['inspector']['outdir']
 csv_name = config['inspector']['csv_name']
+use_apache = config['inspector']['use_apache']
 gen_csv = config['inspector']['gen_csv']
 datatype = config['inspector']['datatype']
 instrument = config['inspector']['instrument']
@@ -44,7 +45,11 @@ aperture_daterange = []
 aperture_detectors = ["STIS/CCD",
                            "STIS/NUV-MAMA", "STIS/FUV-MAMA"]
 aperture_metric = "n-obs"
-mast = generate_dataframe_from_csv(outdir+csv_name)
+
+if use_apache:
+    mast = generate_dataframe_from_csv("https://www.stsci.edu/~STIS/stis_archive.csv")
+else:
+    mast = generate_dataframe_from_csv(outdir+csv_name)
 
 # Overview Page Plots --------------------------------------------
 overview_df = mast[["Start Time", "obstype","Instrument Config","Exp Time"]].copy()
