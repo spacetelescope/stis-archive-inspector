@@ -85,4 +85,4 @@ def generate_csv_from_mast(csv_name, outdir, datatype, instrument):
                                     for x in mast['Instrument Config']]
 
     mast = mast[(mast['Operating Mode'] != 'ACQ') & (mast['Operating Mode'] != 'ACQ/PEAK')]
-    mast.to_csv("stis_archive.csv")
+    mast.to_csv(outdir+csv_name)
