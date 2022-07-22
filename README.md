@@ -18,3 +18,8 @@ After fetching the metadata, the Archive Inspector will launch a local server an
 Paste the address and port into your preferred web browser to use the Archive Inspector. Keep in mind that the terminal used to run the Archive Inspector will need to remain open for the application to function.
 
 ![](docs/port.png)
+
+## The use_apache config option
+The use_apache flag has recently been added to the config file list, which allows your local version of the archive inspector to load from a STIS team maintained data repository, which is updated on a daily cadence here: https://www.stsci.edu/~STIS/stis_archive.csv
+
+This will bypass any need to generate your own dataset.
